@@ -1,0 +1,44 @@
+version: '3.5'
+
+networks:
+  default:
+    ipam:
+      driver: default
+
+services:
+  webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DB_PASSWORD
+    container_name: apache-merc
+    ports:
+      - "6666:80"
+    volumes:
+      - "./source:/var/www/html"
+    depends_on:
+      - postgres
+    restart: always
+
+  postgres:
+    image: postgres:12
+    container_name: postgres-merc
+    environment:
+      POSTGRES_ROOT_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: "merc"
+    volumes:
+      - "./db.sh:/docker-entrypoint-initdb.d/initdb.sh"
+      - "./util/encoder:/tmp/encoder"
+    restart: always
+
+  adminer:
+    image: adminer:4.7.8
+    container_name: adminer-merc
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "6667:8080"
+    restart: always
