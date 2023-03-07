@@ -7,12 +7,12 @@ networks:
 
 services:
   webserver:
+    image: ghrc.io/n57uctf/merc2023:main
     build:
       context: .
       dockerfile: Dockerfile
       args:
         - DB_PASSWORD
-    container_name: apache-merc
     ports:
       - "6666:80"
     volumes:
@@ -23,7 +23,6 @@ services:
 
   postgres:
     image: postgres:12
-    container_name: postgres-merc
     environment:
       POSTGRES_ROOT_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: "user"
@@ -36,9 +35,10 @@ services:
 
   adminer:
     image: adminer:4.7.8
-    container_name: adminer-merc
     environment:
       ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
     ports:
       - "6667:8080"
     restart: always
