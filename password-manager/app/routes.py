@@ -7,7 +7,7 @@ from app.dependencies import Database, JWTBearerAccess, Authentication, Link
 from app.models import CredentialModel, UserModel, AccessTokenModel, StorageModel, CreateStorageModel, ShareLinkModel
 
 
-router = APIRouter()
+router = APIRouter(prefix="api")
 
 
 @router.post("/login", response_model=AccessTokenModel)
