@@ -62,9 +62,9 @@ class Authentication:
     def check_reg(self, username, password):
         try:
             is_registered = self.database.execute('''
-            SELECT "@User", "Username", "Password"
-            FROM "User"
-            WHERE "Username"=%s''', (username,))
+                SELECT "@User", "Username", "Password"
+                FROM "User"
+                WHERE "Username"=%s''', (username,))
             result = is_registered.fetchall()
             self.database.connection.commit()
             for i in result:
@@ -153,9 +153,9 @@ class ExportStorage:
     def create_export(self, username):
         try:
             check_user = self.database.execute('''
-                        SELECT "Title" as title, "Password" as password
-                        FROM "Storage"
-                        WHERE "Owner@"=%s''', (username,))
+                    SELECT "Title" as title, "Password" as password
+                    FROM "Storage"
+                    WHERE "Owner@"=%s''', (username,))
             data_from_storage = check_user.fetchall()
             self.database.connection.commit()
             return data_from_storage

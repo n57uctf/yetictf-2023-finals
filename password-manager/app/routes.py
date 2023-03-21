@@ -1,6 +1,8 @@
 import hashlib
 from typing import List
 from io import StringIO
+import random
+import string
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -18,10 +20,10 @@ async def get_last_10_users(
         database: Database = Depends(Database)
 ):
     cursor = database.execute('''
-    select "Username" as username
-    from "User"
-    order by "@User" desc
-    limit 10''')
+        select "Username" as username
+        from "User"
+        order by "@User" desc
+        limit 10''')
     return [RegisteredUsersModel(username=element[0]) for element in cursor.fetchall()]
 
 
@@ -43,9 +45,9 @@ async def profile_info(
         database: Database = Depends(Database)
 ):
     cursor = database.execute('''
-    select "@User" as user_id, "Username" as username, "Password" as password, "MasterPassword" as masterpass
-    from "User"
-    where "@User"=%s''', (jwt['id'],))
+        select "@User" as user_id, "Username" as username, "Password" as password, "MasterPassword" as masterpass
+        from "User"
+        where "@User"=%s''', (jwt['id'],))
     return UserModel(**cursor.fetchone())
 
 
@@ -54,12 +56,13 @@ async def register(
         creds: CredentialModel,
         database: Database = Depends(Database)
 ):
+    random_masterpass = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(32))
     cursor = database.execute('''
-insert into "User" 
-("Username", "Password", "MasterPassword") 
-values (%s, %s, %s) 
-returning "@User" as user_id, "Username" as username, "Password" as password, "MasterPassword" as masterpass
-    ''', (creds.username, str(hashlib.sha256(creds.password.encode()).hexdigest()), "1233567"))
+        insert into "User" 
+        ("Username", "Password", "MasterPassword") 
+        values (%s, %s, %s) 
+        returning "@User" as user_id, "Username" as username, "Password" as password, "MasterPassword" as masterpass
+            ''', (creds.username, str(hashlib.sha256(creds.password.encode()).hexdigest()), random_masterpass))
     user_creds = UserModel(**cursor.fetchone())
     database.connection.commit()
     return user_creds
@@ -72,11 +75,11 @@ async def create_password(
         database: Database = Depends(Database)
 ):
     cursor = database.execute('''
-    insert into "Storage" 
-    ("Password", "Owner@", "Title") 
-    values (%s, %s, %s) 
-    returning "@Record" as record_id, "Password" as password, "Owner@" as owner_username, "Title" as title
-        ''', (storage_data.password, jwt["username"], storage_data.title))
+        insert into "Storage" 
+        ("Password", "Owner@", "Title") 
+        values (%s, %s, %s) 
+        returning "@Record" as record_id, "Password" as password, "Owner@" as owner_username, "Title" as title
+            ''', (storage_data.password, jwt["username"], storage_data.title))
     storage = StorageModel(**cursor.fetchone())
     database.connection.commit()
     return storage
@@ -126,6 +129,10 @@ async def download_file(
 ):
     username = link.split("/").pop()
     data_to_export = storage.create_export(username)
+    text = "Наш сервис “PasswordManager” предназначен для хранения ваших паролей в защищенном месте. \nОчень жаль, что " \
+           "вы забыли свой пароль, но как видите выгрузить свое хранилище очень легко и без пароля, нужен лишь " \
+           "мастер пароль для расшифровки. \nВы можете заново пройти регистрацию и добавить эти пароли в новое " \
+           "хранилище, чтобы вам было удобнее.\n\n"
     value = "\n".join(': '.join(password_title) for password_title in data_to_export)
-    buf = StringIO(value)
+    buf = StringIO(text+value)
     return StreamingResponse(buf, media_type="application/octet-stream")
