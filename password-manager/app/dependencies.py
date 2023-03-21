@@ -1,3 +1,4 @@
+import hashlib
 import os
 
 import psycopg2
@@ -103,3 +104,38 @@ class JWTBearerAccess(HTTPBearer):
         return auth.verify_auth_token(credentials.credentials)
 
 
+class Link:
+    def __init__(self, database: Database = Depends(Database)):
+        self.database = database
+
+    def create_link(self, username, record_id):
+        try:
+            str2hash = f"{username}{record_id}"
+            link = hashlib.md5(str2hash.encode())
+            add_link = self.database.execute('''
+                    insert into "Links"
+                    ("LinkCode", "Record@")
+                    values (%s, %s)
+                    returning "LinkCode" as link
+                    ''', (link.hexdigest(), record_id))
+            link_from_db = add_link.fetchone()
+            self.database.connection.commit()
+            return link_from_db
+        except Exception as error:
+            raise HTTPException(404, str(error))
+
+    def check_link(self, link):
+        try:
+            check_link_db = self.database.execute('''
+                    SELECT "Record@"
+                    FROM "Links"
+                    WHERE "LinkCode"=%s''', (link,))
+            record_id = check_link_db.fetchone()
+            if record_id:
+                get_password = self.database.execute('''
+                    SELECT "Password" as password, "Title" as title
+                    FROM "Storage"
+                    WHERE "@Record"=%s''', (record_id[0],))
+                return get_password.fetchone()
+        except Exception as error:
+            raise HTTPException(404, str(error))

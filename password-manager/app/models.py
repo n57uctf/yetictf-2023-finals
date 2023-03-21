@@ -27,3 +27,7 @@ class StorageModel(BaseModel):
 class CreateStorageModel(BaseModel):
     password: str
     title: str
+
+
+class ShareLinkModel(BaseModel):
+    link: str

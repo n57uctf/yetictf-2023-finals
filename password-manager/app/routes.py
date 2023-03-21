@@ -3,8 +3,8 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.dependencies import Database, JWTBearerAccess, Authentication
-from app.models import CredentialModel, UserModel, AccessTokenModel, StorageModel, CreateStorageModel
+from app.dependencies import Database, JWTBearerAccess, Authentication, Link
+from app.models import CredentialModel, UserModel, AccessTokenModel, StorageModel, CreateStorageModel, ShareLinkModel
 
 
 router = APIRouter()
@@ -47,22 +47,37 @@ async def create_password(storage_data: CreateStorageModel, jwt: JWTBearerAccess
 
 
 @router.get("/storage", response_model=List[StorageModel])
-async def read_password(jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
-                        database: Database = Depends(Database)):
+async def read_password(
+        jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
+        database: Database = Depends(Database)
+):
     cursor = database.execute('''
-        select "@Record" as record_id, "Owner@" as password, "Password" as owner_username, "Title" as title 
+        select "@Record" as record_id, "Password" as password, "Owner@" as owner_username, "Title" as title 
         from "Storage"
         where "Owner@"=%s''', (jwt["username"],))
     storage = []
-    for i in cursor.fetchall():
-        storage.append(StorageModel(**i))
+    for element in cursor.fetchall():
+        storage.append(StorageModel(**element))
     database.connection.commit()
     return storage
 
 
-@router.get("/share")
-async def share():
-    ...
+@router.get("/share", response_model=ShareLinkModel)
+async def share(
+        record_id: int,
+        link: Link = Depends(Link),
+        jwt: JWTBearerAccess = Depends(JWTBearerAccess())
+):
+    # link.create_link(jwt["username"], record_id)
+    return ShareLinkModel(**link.create_link(jwt["username"], record_id))
+
+
+@router.get("/shared_link", response_model=CreateStorageModel)
+async def shared_link(
+        shared_password_link: str,
+        link: Link = Depends(Link)
+):
+    return CreateStorageModel(**link.check_link(shared_password_link))
 
 
 @router.get("/export")
