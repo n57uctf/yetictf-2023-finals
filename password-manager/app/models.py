@@ -35,3 +35,7 @@ class ShareLinkModel(BaseModel):
 
 class ExportLinkModel(BaseModel):
     link: str
+
+
+class GetRegisteredUsersModel(BaseModel):
+    username: str
