@@ -6,6 +6,8 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input'; 
 import {MatButtonModule} from '@angular/material/button';
 import {MatGridListModule} from '@angular/material/grid-list';  
+import {MatDividerModule} from '@angular/material/divider'; 
+import {MatIconModule} from '@angular/material/icon'; 
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -14,6 +16,7 @@ import { LoginPageComponent } from './_components/login-page/login-page.componen
 import { RegisterPageComponent } from './_components/register-page/register-page.component';
 import { StoragePageComponent } from './_components/storage-page/storage-page.component';
 import { BackupPageComponent } from './_components/backup-page/backup-page.component';
+import { SharedPasswordPageComponent } from './_components/shared-password-page/shared-password-page.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +24,8 @@ import { BackupPageComponent } from './_components/backup-page/backup-page.compo
     LoginPageComponent,
     RegisterPageComponent,
     StoragePageComponent,
-    BackupPageComponent
+    BackupPageComponent,
+    SharedPasswordPageComponent
   ],
   imports: [
     BrowserModule,
@@ -31,7 +35,9 @@ import { BackupPageComponent } from './_components/backup-page/backup-page.compo
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatGridListModule
+    MatGridListModule,
+    MatDividerModule,
+    MatIconModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { BackupPageComponent } from './_components/backup-page/backup-page.component';
 import { LoginPageComponent } from './_components/login-page/login-page.component';
 import { RegisterPageComponent } from './_components/register-page/register-page.component';
+import { SharedPasswordPageComponent } from './_components/shared-password-page/shared-password-page.component';
 import { StoragePageComponent } from './_components/storage-page/storage-page.component';
 
 const routes: Routes = [
@@ -10,6 +11,7 @@ const routes: Routes = [
   {path: 'register', component: RegisterPageComponent},
   {path: 'storage', component: StoragePageComponent},
   {path: 'backup', component: BackupPageComponent},
+  {path: 'shared/:link', component: SharedPasswordPageComponent},
   {path: '**', component: LoginPageComponent}
 ];
 
