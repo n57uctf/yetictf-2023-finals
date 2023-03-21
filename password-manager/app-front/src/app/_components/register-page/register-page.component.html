@@ -1,0 +1,22 @@
+<div class="page">
+    <div class="welcome">
+        <h2>Приветствуем новых пользователей</h2>
+    </div>
+    <form>
+        <h2>Регистрация</h2>
+        <mat-form-field appearance="fill">
+            <mat-label>Логин</mat-label>
+            <input matInput>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+            <mat-label>Пароль</mat-label>
+            <input matInput type="password">
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+            <mat-label>Еще пароль</mat-label>
+            <input matInput type="password">
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="button">Регистрация</button>
+        <button mat-button type="button" [routerLink]="'/login'">Уже есть аккаунт?</button>
+    </form>
+</div>
