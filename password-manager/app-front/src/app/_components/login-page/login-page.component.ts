@@ -1,4 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { ApiService } from 'src/app/_services/api.service';
 
 @Component({
   selector: 'app-login-page',
@@ -7,9 +10,18 @@ import { Component, OnInit } from '@angular/core';
 })
 export class LoginPageComponent implements OnInit {
 
-  constructor() { }
+  constructor(private apiService: ApiService, private snackBar: MatSnackBar, private router: Router) { }
 
   ngOnInit(): void {
+  }
+
+  login(username: string, password: string) {
+    this.apiService.autheticate(
+      {
+        username: username,
+        password: password
+      }
+    )
   }
 
 }

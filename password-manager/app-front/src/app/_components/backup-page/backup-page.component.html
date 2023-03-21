@@ -3,7 +3,7 @@
     <h4>Выгрузка требается в том случае если вы забыли пароль от своего аккаунта, расшифровать можно с использованием мастер-пароля</h4>
     <mat-form-field appearance="fill">
         <mat-label>Ваш логин</mat-label>
-        <input matInput>
+        <input matInput #_username>
     </mat-form-field>
-    <button mat-stroked-button>Получить ссылку</button>
+    <button mat-stroked-button (click)="getBackup(_username.value)">Получить ссылку</button>
 </div>

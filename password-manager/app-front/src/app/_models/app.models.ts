@@ -27,3 +27,15 @@ export interface ICreateStorageModel {
     password: string
     title: string
 }
+
+export interface IShareLinkModel {
+    link: string
+}
+
+export interface IExportLinkModel {
+    link: string
+}
+
+export interface IRegisteredUsersModel {
+    username: string
+}

@@ -8,6 +8,7 @@ services:
       - ./app-front:/app-front
     ports:
       - 8091:80
+    restart: always
 
   backend:
     build: .
@@ -16,6 +17,7 @@ services:
       - .:/app
     expose:
       - 8000
+    restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -28,7 +30,7 @@ services:
 
   db:
     image: postgres
-    restart: unless-stopped
+    restart: always
     expose:
       - 5432
     environment:

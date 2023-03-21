@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
 
 import {MatCardModule} from '@angular/material/card'; 
 import {MatFormFieldModule} from '@angular/material/form-field'; 
@@ -8,6 +9,7 @@ import {MatButtonModule} from '@angular/material/button';
 import {MatGridListModule} from '@angular/material/grid-list';  
 import {MatDividerModule} from '@angular/material/divider'; 
 import {MatIconModule} from '@angular/material/icon'; 
+import {MatSnackBarModule} from '@angular/material/snack-bar'; 
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -37,7 +39,9 @@ import { SharedPasswordPageComponent } from './_components/shared-password-page/
     MatButtonModule,
     MatGridListModule,
     MatDividerModule,
-    MatIconModule
+    MatIconModule,
+    MatSnackBarModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]
