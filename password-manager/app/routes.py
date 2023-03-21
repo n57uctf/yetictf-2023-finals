@@ -26,7 +26,7 @@ async def login(
         raise HTTPException(404, "User not found")
 
 
-@router.post("/profile", response_model=UserModel)
+@router.get("/profile", response_model=UserModel)
 async def profile_info(
         jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
         database: Database = Depends(Database)
@@ -119,5 +119,6 @@ async def download_file(
         storage: ExportStorage = Depends(ExportStorage)
 ):
     print(link.split("/").pop())
+    buf = BytesIO()
 
     return storage.create_export(link.split("/").pop())
