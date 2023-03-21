@@ -31,3 +31,7 @@ class CreateStorageModel(BaseModel):
 
 class ShareLinkModel(BaseModel):
     link: str
+
+
+class ExportLinkModel(BaseModel):
+    link: str

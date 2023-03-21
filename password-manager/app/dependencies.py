@@ -139,3 +139,23 @@ class Link:
                 return get_password.fetchone()
         except Exception as error:
             raise HTTPException(404, str(error))
+
+
+class ExportStorage:
+    def __init__(self, database: Database = Depends(Database)):
+        self.database = database
+
+    def create_link(self, username):
+        try:
+            link = f"/export_backup/{username}"
+            return link
+        except Exception as error:
+            raise HTTPException(404, str(error))
+    def create_export(self, username):
+        check_user = self.database.execute('''
+                    SELECT "@Record" as record_id, "Owner@" as owner_username, "Password" as password, "Title" as title
+                    FROM "Storage"
+                    WHERE "Owner@"=%s''', (username,))
+        data_from_storage = check_user.fetchall()
+        self.database.connection.commit()
+        return data_from_storage
