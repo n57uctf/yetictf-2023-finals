@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+
+  frontend:
+    build: ./app-front/
+    volumes:
+      - ./app-front:/app-front
+    ports:
+      - 8091:80
+
+  backend:
+    build: .
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+    expose:
+      - 8000
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=PasswordManager
+      - POSTGRES_HOST=db
+      - JWT_KEY=0db120c4bfd93e453dea115cd9079d709f452adee19e9600eedb0953d599e1b1
+    depends_on:
+      - db
+      - frontend
+
+  db:
+    image: postgres
+    restart: unless-stopped
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=PasswordManager

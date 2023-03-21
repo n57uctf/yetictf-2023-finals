@@ -10,11 +10,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 class Database:
     def __init__(self):
-        self.connection = psycopg2.connect(user=os.environ.get("DB_USER") or 'postgres',
-                                           password=os.environ.get("DB_PASSWORD") or 'postgresql',
-                                           host=os.environ.get("DB_HOST") or '127.0.0.1',
-                                           port=os.environ.get("DB_PORT") or "5432",
-                                           database=os.environ.get("DB_NAME") or "PasswordManager",
+        self.connection = psycopg2.connect(user=os.environ.get("POSTGRES_USER") or 'postgres',
+                                           password=os.environ.get("POSTGRES_PASSWORD") or 'postgresql',
+                                           host=os.environ.get("POSTGRES_HOST") or '127.0.0.1',
+                                           port=5432,
+                                           database=os.environ.get("POSTGRES_DB") or "PasswordManager",
                                            cursor_factory=DictCursor)
         self.cursor = self.connection.cursor()
 
