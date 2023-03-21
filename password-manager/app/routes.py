@@ -1,6 +1,6 @@
 import hashlib
 from typing import List
-from io import BytesIO
+from io import StringIO
 import tempfile
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -118,7 +118,9 @@ async def download_file(
         link: str,
         storage: ExportStorage = Depends(ExportStorage)
 ):
-    print(link.split("/").pop())
-    buf = BytesIO()
-
-    return storage.create_export(link.split("/").pop())
+    username = link.split("/").pop()
+    data_to_export = storage.create_export(username)
+    value = "\n".join(': '.join(password_title) for password_title in data_to_export)
+    buf = StringIO(value)
+# filename=f"{username}_Exported_Password_Storage.txt",
+    return StreamingResponse(buf, media_type="application/octet-stream")

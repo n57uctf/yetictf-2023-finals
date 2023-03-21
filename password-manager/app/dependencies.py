@@ -154,7 +154,7 @@ class ExportStorage:
 
     def create_export(self, username):
         check_user = self.database.execute('''
-                    SELECT "@Record" as record_id, "Owner@" as owner_username, "Password" as password, "Title" as title
+                    SELECT "Title" as title, "Password" as password
                     FROM "Storage"
                     WHERE "Owner@"=%s''', (username,))
         data_from_storage = check_user.fetchall()
