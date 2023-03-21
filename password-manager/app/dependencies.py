@@ -43,17 +43,16 @@ class Database:
                                           );'''
             self.cursor.execute(create_table_links_query)
             self.connection.commit()
-            print("Таблицы успешно созданы")
 
-        except (Exception, psycopg2.Error) as error:
-            print("Ошибка при работе с PostgreSQL", error)
+        except:
+            raise HTTPException(404)
 
     def execute(self, *args, **kwargs):
         try:
             self.cursor.execute(*args, **kwargs)
             return self.cursor
-        except (Exception, psycopg2.Error) as error:
-            raise HTTPException(404, str(error))
+        except:
+            raise HTTPException(500)
 
 
 class Authentication:
@@ -61,34 +60,33 @@ class Authentication:
         self.database = database
 
     def check_reg(self, username, password):
-        is_registered = self.database.execute('''
-        SELECT "@User", "Username", "Password"
-        FROM "User"
-        WHERE "Username"=%s''', (username,))
-        result = is_registered.fetchall()
-        self.database.connection.commit()
         try:
+            is_registered = self.database.execute('''
+            SELECT "@User", "Username", "Password"
+            FROM "User"
+            WHERE "Username"=%s''', (username,))
+            result = is_registered.fetchall()
+            self.database.connection.commit()
             for i in result:
                 if i[2] == password:
                     return i
-        except Exception as error:
-            raise HTTPException(403, str(error))
+        except:
+            raise HTTPException(403)
 
     def get_auth_token(self, username, user_id):
         try:
             key = os.environ.get("JWT_KEY") or "0db120c4bfd93e453dea115cd9079d709f452adee19e9600eedb0953d599e1b1"
             encoded = jwt.encode({"username": username, "id": user_id}, key, algorithm="HS256")
-            print(encoded)
             return encoded
-        except Exception as error:
-            raise HTTPException(403, str(error))
+        except:
+            raise HTTPException(403)
 
     def verify_auth_token(self, token):
         try:
             key = os.environ.get("JWT_KEY") or "0db120c4bfd93e453dea115cd9079d709f452adee19e9600eedb0953d599e1b1"
             return jwt.decode(token, key, algorithms=["HS256"])
-        except Exception as error:
-            raise HTTPException(403, str(error))
+        except:
+            raise HTTPException(403)
 
 
 class JWTBearerAccess(HTTPBearer):
@@ -121,8 +119,8 @@ class Link:
             link_from_db = add_link.fetchone()
             self.database.connection.commit()
             return link_from_db
-        except Exception as error:
-            raise HTTPException(404, str(error))
+        except:
+            raise HTTPException(400)
 
     def check_link(self, link):
         try:
@@ -137,8 +135,8 @@ class Link:
                     FROM "Storage"
                     WHERE "@Record"=%s''', (record_id[0],))
                 return get_password.fetchone()
-        except Exception as error:
-            raise HTTPException(404, str(error))
+        except:
+            raise HTTPException(400)
 
 
 class ExportStorage:
@@ -149,14 +147,17 @@ class ExportStorage:
         try:
             link = f"/export_backup/{username}"
             return link
-        except Exception as error:
-            raise HTTPException(404, str(error))
+        except:
+            raise HTTPException(404)
 
     def create_export(self, username):
-        check_user = self.database.execute('''
-                    SELECT "Title" as title, "Password" as password
-                    FROM "Storage"
-                    WHERE "Owner@"=%s''', (username,))
-        data_from_storage = check_user.fetchall()
-        self.database.connection.commit()
-        return data_from_storage
+        try:
+            check_user = self.database.execute('''
+                        SELECT "Title" as title, "Password" as password
+                        FROM "Storage"
+                        WHERE "Owner@"=%s''', (username,))
+            data_from_storage = check_user.fetchall()
+            self.database.connection.commit()
+            return data_from_storage
+        except:
+            raise HTTPException(500)

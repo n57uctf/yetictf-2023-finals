@@ -1,7 +1,6 @@
 import hashlib
 from typing import List
 from io import StringIO
-import tempfile
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -23,11 +22,7 @@ async def get_last_10_users(
     from "User"
     order by "@User" desc
     limit 10''')
-    storage = []
-    for element in cursor.fetchall():
-        storage.append(RegisteredUsersModel(username=element[0]))
-    database.connection.commit()
-    return storage
+    return [RegisteredUsersModel(username=element[0]) for element in cursor.fetchall()]
 
 
 @router.post("/login", response_model=AccessTokenModel)
@@ -96,11 +91,7 @@ async def read_password(
         select "@Record" as record_id, "Password" as password, "Owner@" as owner_username, "Title" as title 
         from "Storage"
         where "Owner@"=%s''', (jwt["username"],))
-    storage = []
-    for element in cursor.fetchall():
-        storage.append(StorageModel(**element))
-    database.connection.commit()
-    return storage
+    return [StorageModel(**element) for element in cursor.fetchall()]
 
 
 @router.get("/share", response_model=ShareLinkModel)
@@ -109,7 +100,6 @@ async def share(
         link: Link = Depends(Link),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    # link.create_link(jwt["username"], record_id)
     return ShareLinkModel(**link.create_link(jwt["username"], record_id))
 
 
@@ -138,5 +128,4 @@ async def download_file(
     data_to_export = storage.create_export(username)
     value = "\n".join(': '.join(password_title) for password_title in data_to_export)
     buf = StringIO(value)
-# filename=f"{username}_Exported_Password_Storage.txt",
     return StreamingResponse(buf, media_type="application/octet-stream")
