@@ -1,4 +1,5 @@
 import hashlib
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -45,14 +46,16 @@ async def create_password(storage_data: CreateStorageModel, jwt: JWTBearerAccess
     return storage
 
 
-@router.get("/storage", response_model=StorageModel)
+@router.get("/storage", response_model=List[StorageModel])
 async def read_password(jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
                         database: Database = Depends(Database)):
     cursor = database.execute('''
-        select "Password", "Title" 
+        select "@Record" as record_id, "Owner@" as password, "Password" as owner_username, "Title" as title 
         from "Storage"
         where "Owner@"=%s''', (jwt["username"],))
-    storage = StorageModel(**cursor.fetchall())
+    storage = []
+    for i in cursor.fetchall():
+        storage.append(StorageModel(**i))
     database.connection.commit()
     return storage
 
