@@ -8,13 +8,13 @@ from fastapi.responses import StreamingResponse
 
 from app.dependencies import Database, JWTBearerAccess, Authentication, Link, ExportStorage
 from app.models import CredentialModel, UserModel, AccessTokenModel, StorageModel, CreateStorageModel, ShareLinkModel, \
-    ExportLinkModel, GetRegisteredUsersModel
+    ExportLinkModel, RegisteredUsersModel
 
 
 router = APIRouter(prefix="/api")
 
 
-@router.post("/get_users", response_model=List[GetRegisteredUsersModel])
+@router.get("/get_users", response_model=List[RegisteredUsersModel])
 async def get_last_10_users(
         database: Database = Depends(Database)
 ):
@@ -25,7 +25,7 @@ async def get_last_10_users(
     limit 10''')
     storage = []
     for element in cursor.fetchall():
-        storage.append(GetRegisteredUsersModel(username=element[0]))
+        storage.append(RegisteredUsersModel(username=element[0]))
     database.connection.commit()
     return storage
 

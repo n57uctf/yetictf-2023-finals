@@ -37,5 +37,5 @@ class ExportLinkModel(BaseModel):
     link: str
 
 
-class GetRegisteredUsersModel(BaseModel):
+class RegisteredUsersModel(BaseModel):
     username: str
