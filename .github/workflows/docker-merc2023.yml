@@ -52,3 +52,92 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
+
+  checker:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup python for checker
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install checker requirements
+        run: pip install -r ./merc2023/checker/requirements.txt
+        
+      - name: docker compose up
+        run: docker compose -f ./merc2023/docker-compose.yml up -d --remove-orphans --quiet-pull --no-build
+      
+      - run: docker ps
+      
+      - run: sleep 10 && curl -vvv http://127.0.0.1:6666
+      
+      - run: chmod +x ./merc2023/checker/checker.py
+
+      - name: checker.py check
+        run: |
+          set +e
+          ./merc2023/checker/checker.py check 127.0.0.1
+          exitcode="$?"
+          echo "exitcode=$exitcode" 
+          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+          exit 0
+
+      - name: checker.py put1
+        id: put1
+        run: |
+          set +e
+          ./merc2023/checker/checker.py put 127.0.0.1 test AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= 1 2>stderr.txt
+          echo "stderr='$(cat stderr.txt)'" >> $GITHUB_OUTPUT && rm stderr.txt
+          exitcode="$?"
+          echo "exitcode=$exitcode" 
+          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+          exit 0
+      
+      - name: checker.py get1
+        run: |
+          set +e
+          ./merc2023/checker/checker.py get 127.0.0.1 ${{ steps.put1.outputs.stderr }} AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= 1
+          exitcode="$?"
+          echo "exitcode=$exitcode" 
+          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+          exit 0
+        
+      - name: checker.py put2
+        id: put2
+        run: |
+          set +e
+          ./merc2023/checker/checker.py put 127.0.0.1 test AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= 2 2>stderr.txt
+          echo "stderr='$(cat stderr.txt)'" >> $GITHUB_OUTPUT && rm stderr.txt
+          exitcode="$?"
+          echo "exitcode=$exitcode" 
+          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+          exit 0
+      
+      - name: checker.py get2
+        run: |
+          set +e
+          ./merc2023/checker/checker.py get 127.0.0.1 ${{ steps.put2.outputs.stderr }} AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= 1
+          exitcode="$?"
+          echo "exitcode=$exitcode" 
+          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+          exit 0 
+
+      - name: docker compose down
+        run: docker compose -f ./merc2023/docker-compose.yml down --remove-orphans --rmi all --volumes
