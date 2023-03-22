@@ -7,7 +7,7 @@ networks:
 
 services:
   webserver:
-    image: ghrc.io/n57uctf/merc2023:main
+    image: ghcr.io/n57uctf/merc2023:main
     build:
       context: .
       dockerfile: Dockerfile
