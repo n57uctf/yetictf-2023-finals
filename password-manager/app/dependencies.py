@@ -11,7 +11,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 class Database:
     def __init__(self):
         self.connection = psycopg2.connect(user=os.environ.get("POSTGRES_USER") or 'postgres',
-                                           password=os.environ.get("POSTGRES_PASSWORD") or 'postgresql',
+                                           password=os.environ.get("POSTGRES_PASSWORD") or 'postgres' or 'postgresql',
                                            host=os.environ.get("POSTGRES_HOST") or '127.0.0.1',
                                            port=5432,
                                            database=os.environ.get("POSTGRES_DB") or "PasswordManager",
@@ -157,6 +157,18 @@ class ExportStorage:
                     FROM "Storage"
                     WHERE "Owner@"=%s''', (username,))
             data_from_storage = check_user.fetchall()
+            self.database.connection.commit()
+            return data_from_storage
+        except:
+            raise HTTPException(500)
+
+    def get_master_password(self, username):
+        try:
+            master_pass = self.database.execute('''
+            SELECT "MasterPassword"
+                    FROM "User"
+                    WHERE "Username"=%s''', (username,))
+            data_from_storage = master_pass.fetchone()
             self.database.connection.commit()
             return data_from_storage
         except:

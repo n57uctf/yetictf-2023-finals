@@ -3,6 +3,7 @@ from typing import List
 from io import StringIO
 import random
 import string
+import ctypes
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -10,7 +11,6 @@ from fastapi.responses import StreamingResponse
 from app.dependencies import Database, JWTBearerAccess, Authentication, Link, ExportStorage
 from app.models import CredentialModel, UserModel, AccessTokenModel, StorageModel, CreateStorageModel, ShareLinkModel, \
     ExportLinkModel, RegisteredUsersModel
-
 
 router = APIRouter(prefix="/api")
 
@@ -129,10 +129,14 @@ async def download_file(
 ):
     username = link.split("/").pop()
     data_to_export = storage.create_export(username)
+    master_password = storage.get_master_password(username)
     text = "Наш сервис “PasswordManager” предназначен для хранения ваших паролей в защищенном месте. \nОчень жаль, что " \
            "вы забыли свой пароль, но как видите выгрузить свое хранилище очень легко и без пароля, нужен лишь " \
            "мастер пароль для расшифровки. \nВы можете заново пройти регистрацию и добавить эти пароли в новое " \
            "хранилище, чтобы вам было удобнее.\n\n"
     value = "\n".join(': '.join(password_title) for password_title in data_to_export)
     buf = StringIO(text+value)
-    return StreamingResponse(buf, media_type="application/octet-stream")
+    crypt = ctypes.CDLL('bin/libCrypt.so')
+    crypt.encrypt.restype = ctypes.c_char_p
+    crypt.encrypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ]
+    return StreamingResponse(crypt.encrypt(buf, master_password[0]), media_type="application/octet-stream")
