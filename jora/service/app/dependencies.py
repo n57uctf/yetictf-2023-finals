@@ -32,19 +32,20 @@ class Database:
                                           "@Project" SERIAL PRIMARY KEY,
                                           "Name" TEXT NOT NULL,
                                           "Description" TEXT NOT NULL,
-                                          "Creator@" INT REFERENCES "User"
+                                          "Creator@" INT NOT NULL REFERENCES "User"
                                           );
                                 CREATE TABLE IF NOT EXISTS "Task" (
                                           "@Task" SERIAL PRIMARY KEY,
                                           "Name" TEXT NOT NULL,
                                           "Description" TEXT NOT NULL,
                                           "Attachments" text[] NOT NULL,
-                                          "Project@" INT REFERENCES "Project",
-                                          "Responsible@" INT REFERENCES "User"
+                                          "Project@" INT NOT NULL REFERENCES "Project",
+                                          "Responsible@" INT NOT NULL REFERENCES "User"
                                           );
                                 CREATE TABLE IF NOT EXISTS "UserProject" (
-                                          "User@" INT REFERENCES "User",
-                                          "Project@" INT REFERENCES "Project"
+                                          "User@" INT NOT NULL REFERENCES "User",
+                                          "Project@" INT NOT NULL REFERENCES "Project",
+                                          CONSTRAINT user_project UNIQUE ("User@", "Project@")
                                           );'''
             self.cursor.execute(create_tables)
             self.connection.commit()
@@ -139,35 +140,27 @@ class Project:
         self.database = database
 
     def create_project(self, name, description, username):
-        is_project_name = self.database.execute('''
-            with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-            select "Name" from "Project" 
-            where "Name"=%s and "Creator@"=(select user_id from get_user limit 1)''', (username, name))
-        if not is_project_name.fetchone():
-            try:
-                new_project = self.database.execute('''
-                    with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-                    insert into "Project" ("Name", "Description", "Creator@") 
-                    values (%s, %s, (select user_id from get_user limit 1)) 
-                    returning "@Project" as project_id, "Name" as name, "Description" as description
-                    ''', (username, name, description))
-                project_data = new_project.fetchone()
-                self.database.connection.commit()
-                print(project_data)
-                return project_data
-            except (Exception, Error) as error:
-                raise HTTPException(500, f"{error}")
-
-    def add_access_to_user(self, username, project_id, creator):
-        check_admin = self.database.execute('''
-        with get_admin as (select "Creator@" as creator_id from "Project" where "@Project"=%s)
-        select "Username" from "User" where "@User"=(select creator_id from get_admin limit 1)''', (project_id,))
-        if check_admin.fetchone()[0] == creator:
-            is_user_has_access = self.database.execute('''
+        try:
+            new_project = self.database.execute('''
                 with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-                select "User@" from "UserProject" 
-                where "User@"=(select user_id from get_user limit 1) and "Project@"=%s''', (username, project_id))
-            if not is_user_has_access.fetchone():
+                insert into "Project" ("Name", "Description", "Creator@") 
+                values (%s, %s, (select user_id from get_user limit 1)) 
+                returning "@Project" as project_id, "Name" as name, "Description" as description
+                ''', (username, name, description))
+            project_data = new_project.fetchone()
+            self.database.connection.commit()
+            print(project_data)
+            return project_data
+        except (Exception, Error) as error:
+            raise HTTPException(400)
+
+    def add_access_to_user(self, username, project_id, creator_username):
+        is_admin = self.database.execute('''
+                            with get_admin as (select "Creator@" as creator_id from "Project" where "@Project"=%s)
+                            select "Username" from "User" where "@User"=(select creator_id from get_admin limit 1)''',
+                                         (project_id,))
+        if is_admin.fetchone()[0] == creator_username:
+            try:
                 new_access = self.database.execute('''
                     with get_user as (select "@User" as user_id from "User" where "Username"=%s)
                     insert into "UserProject" ("User@", "Project@") 
@@ -177,37 +170,25 @@ class Project:
                 self.database.connection.commit()
                 print(project_access_data)
                 return project_access_data
-            else:
-                raise HTTPException(400, "User already has access")
+            except:
+                raise HTTPException(400)
         else:
             raise HTTPException(400, "Not creator of the project")
 
-    def who_has_access(self, project_id):
-        ...
-
-    def get_project_id(self, project_name, creator):
-        project_id = self.database.execute('''
-        with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-        select "@Project" from "Project" 
-        where "Name"=%s and "Creator@"=(select user_id from get_user limit 1)
-        ''', (creator, project_name))
-        return project_id.fetchone()[0]
-
-    def get_project(self, project_name, creator_username):
-        project = self.database.execute('''
-        with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-        select "@Project" as project_id, "Name" as name, "Description" as description from "Project" 
-        where "Name"=%s and "Creator@"=(select user_id from get_user limit 1)
-        ''', (creator_username, project_name))
-        return project.fetchone()
-
-    def get_projects(self, creator_username):
-        projects = self.database.execute('''
-                with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-                select "@Project" as project_id, "Name" as name, "Description" as description from "Project" 
-                where "Creator@"=(select user_id from get_user limit 1)
-                ''', (creator_username,))
-        return projects.fetchall()
+    def get_projects(self, username):
+        try:
+            projects = self.database.execute('''
+                    with get_user as (select "@User" as user_id from "User" where "Username"=%s)
+                    select "@Project" as project_id, "Name" as name, "Description" as description from "Project" 
+                    where "Creator@"=(select user_id from get_user limit 1)
+                    union
+                    select p."@Project" as project_id, p."Name" as name, p."Description" as description from "Project" p
+                    join "UserProject" up on p."@Project"=up."Project@"
+                    where up."User@"=(select user_id from get_user limit 1)
+                    ''', (username,))
+            return projects.fetchall()
+        except:
+            raise HTTPException(400)
 
 
 class Task:
@@ -216,45 +197,59 @@ class Task:
 
     def create_task(self, name, description, attachments, project_id, creator_username, responsible_username):
         is_admin = self.database.execute('''
-            with get_admin as (select "Creator@" as creator_id from "Project" where "@Project"=%s)
-            select "Username" from "User" where "@User"=(select creator_id from get_admin limit 1)''', (project_id,))
+                    with get_admin as (select "Creator@" as creator_id from "Project" where "@Project"=%s)
+                    select "Username" from "User" where "@User"=(select creator_id from get_admin limit 1)''',
+                                         (project_id,))
         print(name, description, attachments, project_id, creator_username, responsible_username)
         if is_admin.fetchone()[0] == creator_username:
-            is_task_name = self.database.execute('''
-                select "Name" from "Task" 
-                where "Name"=%s and "Project@"=%s''', (name, project_id))
-            if not is_task_name.fetchone():
-                is_respons_in_project = self.database.execute('''
-                    with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-                    select "User@" from "UserProject" 
-                    where "User@"=(select user_id from get_user limit 1) and "Project@"=%s
-                    ''', (responsible_username, project_id))
-                if is_respons_in_project.fetchone():
-                    try:
-                        new_task = self.database.execute('''
-                                    with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-                                    insert into "Task" ("Name", "Description", "Attachments", "Project@", "Responsible@") 
-                                    values (%s, %s, %s, %s, (select user_id from get_user limit 1)) 
-                                    returning "Name" as name, "Description" as description, "Attachments" as attachments
-                                    ''', (responsible_username, name, description, attachments, project_id))
-                        task_data = dict(new_task.fetchone())
-                        task_data.update({"responsible": responsible_username})
-                        self.database.connection.commit()
-                        return task_data
-                    except (Exception, Error) as error:
-                        raise HTTPException(500, f"{error}")
-                else:
-                    raise HTTPException(400, "Responsible user is not in the project")
+            is_user_in_project = self.database.execute('''
+                with get_user as (select "@User" as user_id from "User" where "Username"=%s)
+                select "User@" from "UserProject" 
+                where "User@"=(select user_id from get_user limit 1) and "Project@"=%s
+                ''', (responsible_username, project_id))
+            if is_user_in_project.fetchone():
+                try:
+                    new_task = self.database.execute('''
+                                with get_user as (select "@User" as user_id from "User" where "Username"=%s)
+                                insert into "Task" ("Name", "Description", "Attachments", "Project@", "Responsible@") 
+                                values (%s, %s, %s, %s, (select user_id from get_user limit 1)) 
+                                returning "@Task" as task_id, "Name" as name, "Description" as description, "Attachments" as attachments
+                                ''', (responsible_username, name, description, attachments, project_id))
+                    task_data = dict(new_task.fetchone())
+                    task_data.update({"responsible": responsible_username})
+                    self.database.connection.commit()
+                    return task_data
+                except (Exception, Error) as error:
+                    raise HTTPException(500, f"{error}")
             else:
-                raise HTTPException(400, "There is already task with this name")
+                raise HTTPException(400, "Responsible user is not in the project")
         else:
             raise HTTPException(400, "Not creator of the project")
 
-    def reassign_task(self, name, project_id, responsible_username):
-        ...
-
-    def open_task(self, name, project_id, responsible_username):
-        ...
+    def open_tasks(self, project_id, username):
+        is_user_in_project = self.database.execute('''
+                    with get_user as (select "@User" as user_id from "User" where "Username"=%s)
+                    select "User@" from "UserProject" 
+                    where "User@"=(select user_id from get_user limit 1) and "Project@"=%s
+                    ''', (username, project_id))
+        is_user_creator = self.database.execute('''
+                    with get_user as (select "@User" as user_id from "User" where "Username"=%s)
+                    select "Creator@" from "Project" 
+                    where "Creator@"=(select user_id from get_user limit 1) and "@Project"=%s
+                    ''', (username, project_id))
+        if is_user_in_project.fetchone() or is_user_creator.fetchone():
+            tasks = self.database.execute('''
+                        select "@Task" as task_id, 
+                        t."Name" as name, 
+                        t."Description" as description, 
+                        t."Attachments" as attachments, 
+                        u."Username" as responsible from "Task" t
+                        join "User" u on t."Responsible@"=u."@User" 
+                        where "Project@"=%s
+                        ''', (project_id,))
+            result = tasks.fetchall()
+            print(result)
+            return result
 
 
 class Debug:

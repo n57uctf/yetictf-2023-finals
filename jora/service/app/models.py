@@ -39,6 +39,14 @@ class AccessToUsersModel(BaseModel):
 
 
 class TaskModel(BaseModel):
+    task_id: int
+    name: str
+    description: str
+    attachments: list
+    responsible: str
+
+
+class NewTaskModel(BaseModel):
     name: str
     description: str
     attachments: list

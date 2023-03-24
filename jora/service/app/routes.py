@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
 from service.app.dependencies import Database, Authentication, Registration, JWTBearerAccess, Profile, Project, Task, Debug
-from service.app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, TaskModel, NewProjectModel, AccessToUsersModel
+from service.app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel
 
 
 router = APIRouter(prefix="/api")
@@ -54,42 +54,26 @@ async def create_project(
         jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
         project: Project = Depends(Project)
 ):
-    print(jwt["username"], new_project_data.name, new_project_data.description)
     created_project_data = project.create_project(new_project_data.name, new_project_data.description, jwt["username"])
     if created_project_data:
         created_project_data = ProjectModel(**created_project_data)
         for i in users:
-            print(i, created_project_data.project_id, jwt["username"])
             project.add_access_to_user(i, created_project_data.project_id, jwt["username"])
         return created_project_data
     else:
-        raise HTTPException(400, "Project with this name already exists")
+        raise HTTPException(400)
 
 
 @router.post("/add_user_to_project", response_model=AccessToUsersModel)
 async def add_user_to_project(
         users: list,
-        new_project_data: NewProjectModel,
+        project_id: int,
         jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
         project: Project = Depends(Project)
 ):
-    project_id = project.get_project_id(new_project_data.name, jwt["username"])
     for i in users:
         project.add_access_to_user(str(i), project_id, jwt["username"])
     return AccessToUsersModel(usernames=users)
-
-
-@router.get("/open_project", response_model=ProjectModel)
-async def open_project(
-        project_name: str,
-        project: Project = Depends(Project),
-        jwt: JWTBearerAccess = Depends(JWTBearerAccess())
-):
-    result = project.get_project(project_name, jwt["username"])
-    if result:
-        return ProjectModel(**result)
-    else:
-        raise HTTPException(400, "Something went wrong")
 
 
 @router.get("/open_projects", response_model=List[ProjectModel])
@@ -106,13 +90,11 @@ async def open_projects(
 
 @router.post("/create_task", response_model=TaskModel)
 async def create_task(
-        project_name: str,
-        new_task_data: TaskModel,
+        project_id: int,
+        new_task_data: NewTaskModel,
         jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
-        new_task: Task = Depends(Task),
-        project: Project = Depends(Project)
+        new_task: Task = Depends(Task)
 ):
-    project_id = project.get_project_id(project_name, jwt["username"])
     created_task_data = new_task.create_task(new_task_data.name, new_task_data.description, new_task_data.attachments,
                                              project_id, jwt["username"], new_task_data.responsible)
     if created_task_data:
@@ -122,27 +104,17 @@ async def create_task(
         raise HTTPException(400)
 
 
-@router.get("/open_task", response_model=TaskModel)
-async def open_task(
+@router.get("/open_tasks", response_model=List[TaskModel])
+async def open_tasks(
+        project_id: int,
+        tasks: Task = Depends(Task),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    # access to task to everyone from the project
-    ...
-
-
-@router.get("/open_tasks", response_model=TaskModel)
-async def open_task(
-        jwt: JWTBearerAccess = Depends(JWTBearerAccess())
-):
-    # access to task to everyone from the project
-    ...
-
-
-@router.post("/reassign_task", response_model=TaskModel)
-async def reassign_task(
-        jwt: JWTBearerAccess = Depends(JWTBearerAccess())
-):
-    ...
+    result = tasks.open_tasks(project_id, jwt["username"])
+    if result:
+        return (TaskModel(**element) for element in result)
+    else:
+        raise HTTPException(400, "Something went wrong")
 
 
 @router.post("/create_report")
