@@ -45,7 +45,7 @@ class Database:
             self.connection.commit()
 
         except:
-            raise HTTPException(404)
+            raise HTTPException(500)
 
     def execute(self, *args, **kwargs):
         try:
