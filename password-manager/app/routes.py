@@ -1,6 +1,6 @@
 import hashlib
 from typing import List
-from io import StringIO
+from io import BytesIO
 import random
 import string
 import ctypes
@@ -135,8 +135,13 @@ async def download_file(
            "мастер пароль для расшифровки. \nВы можете заново пройти регистрацию и добавить эти пароли в новое " \
            "хранилище, чтобы вам было удобнее.\n\n"
     value = "\n".join(': '.join(password_title) for password_title in data_to_export)
-    buf = StringIO(text+value)
-    crypt = ctypes.CDLL('bin/libCrypt.so')
+    crypt = ctypes.CDLL('bin/Cript.so')
     crypt.encrypt.restype = ctypes.c_char_p
     crypt.encrypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ]
-    return StreamingResponse(crypt.encrypt(buf, master_password[0]), media_type="application/octet-stream")
+    buf = BytesIO(
+        crypt.encrypt(
+            (text+value).encode(),
+            master_password[0].encode()
+        )
+    )
+    return StreamingResponse(buf, media_type="application/octet-stream")
