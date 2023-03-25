@@ -38,7 +38,7 @@ class Database:
                                           "@Task" SERIAL PRIMARY KEY,
                                           "Name" TEXT NOT NULL,
                                           "Description" TEXT NOT NULL,
-                                          "Attachments" text[] NOT NULL,
+                                          "Attachments" text[],
                                           "Project@" INT NOT NULL REFERENCES "Project",
                                           "Responsible@" INT NOT NULL REFERENCES "User"
                                           );
@@ -195,12 +195,12 @@ class Task:
     def __init__(self, database: Database = Depends(Database)):
         self.database = database
 
-    def create_task(self, name, description, attachments, project_id, creator_username, responsible_username):
+    def create_task(self, name, description, project_id, creator_username, responsible_username): # attachments,
         is_admin = self.database.execute('''
                     with get_admin as (select "Creator@" as creator_id from "Project" where "@Project"=%s)
                     select "Username" from "User" where "@User"=(select creator_id from get_admin limit 1)''',
                                          (project_id,))
-        print(name, description, attachments, project_id, creator_username, responsible_username)
+        print(name, description, project_id, creator_username, responsible_username)
         admin = is_admin.fetchone()[0]
         if admin == creator_username:
             is_user_in_project = self.database.execute('''
@@ -209,17 +209,19 @@ class Task:
                 where "User@"=(select user_id from get_user limit 1) and "Project@"=%s
                 ''', (responsible_username, project_id))
             user = is_user_in_project.fetchone()
+            print(responsible_username, admin)
             if user or responsible_username == admin:
                 try:
                     new_task = self.database.execute('''
                                 with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-                                insert into "Task" ("Name", "Description", "Attachments", "Project@", "Responsible@") 
-                                values (%s, %s, %s, %s, (select user_id from get_user limit 1)) 
-                                returning "@Task" as task_id, "Name" as name, "Description" as description, "Attachments" as attachments
-                                ''', (responsible_username, name, description, attachments, project_id))
+                                insert into "Task" ("Name", "Description", "Project@", "Responsible@") --"Attachments",
+                                values (%s, %s, %s, (select user_id from get_user limit 1)) 
+                                returning "@Task" as task_id, "Name" as name, "Description" as description --"Attachments" as attachments
+                                ''', (responsible_username, name, description, project_id))  # attachments,
                     task_data = dict(new_task.fetchone())
                     task_data.update({"responsible": responsible_username})
                     self.database.connection.commit()
+                    print(task_data)
                     return task_data
                 except (Exception, Error) as error:
                     raise HTTPException(500, f"{error}")
@@ -247,7 +249,7 @@ class Task:
                                 select t."@Task" as task_id, 
                                 t."Name" as name, 
                                 t."Description" as description, 
-                                t."Attachments" as attachments, 
+                                --t."Attachments" as attachments, 
                                 u."Username" as responsible from "Task" t
                                 join "User" u on t."Responsible@"=u."@User" 
                                 where "Project@"=%s
@@ -256,16 +258,15 @@ class Task:
         return result
 
     def search(self, query):
+        # search_query = '%'+query+'%'
         search = self.database.execute('''
-                with select_attach as (select unnest("Attachments") as attachment from "Task") 
                 select t."@Task" as task_id, 
                 t."Name" as name, 
                 t."Description" as description, 
-                t."Attachments" as attachments, 
                 u."Username" as responsible from "Task" t
                 join "User" u on t."Responsible@"=u."@User" 
-                where (t."Name" like %s) or (t."Description" like %s) or 
-                (t."Attachments" && (select array_agg(attachment) from select_attach where attachment like %s))
-                ''', ('%'+query+'%', '%'+query+'%', '%'+query+'%'))
+                where (t."Name" like %s) or (t."Description" like %s)
+                ''', ('%'+query+'%', '%'+query+'%'))
         result = search.fetchall()
+        print(result)
         return result

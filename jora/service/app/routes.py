@@ -92,8 +92,8 @@ async def create_task(
         jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
         new_task: Task = Depends(Task)
 ):
-    created_task_data = new_task.create_task(new_task_data.name, new_task_data.description, new_task_data.attachments,
-                                             project_id, jwt["username"], new_task_data.responsible)
+    created_task_data = new_task.create_task(new_task_data.name, new_task_data.description, project_id, jwt["username"],
+                                             new_task_data.responsible)
     if created_task_data:
         print(dict(created_task_data))
         return TaskModel(**created_task_data)
@@ -131,7 +131,7 @@ async def search(
     if result:
         return (TaskModel(**element) for element in result)
     else:
-        raise HTTPException(400)
+        raise HTTPException(404)
 
 
 @router.get("/debug", response_model=List[TaskModel])
@@ -144,4 +144,4 @@ async def search(
     if result:
         return (TaskModel(**element) for element in result)
     else:
-        raise HTTPException(400)
+        return HTTPException(400)
