@@ -236,15 +236,35 @@ class Task:
                     select "User@" from "UserProject" 
                     where "User@"=(select user_id from get_user limit 1) and "Project@"=%s
                     ''', (username, project_id))
+        user_in_project = is_user_in_project.fetchone()
         is_user_creator = self.database.execute('''
                     with get_user as (select "@User" as user_id from "User" where "Username"=%s)
                     select "Creator@" from "Project" 
                     where "Creator@"=(select user_id from get_user limit 1) and "@Project"=%s
                     ''', (username, project_id))
-        if is_user_in_project.fetchone() or is_user_creator.fetchone():
-            return self.get_tasks(project_id)
+        user_creator = is_user_creator.fetchone()
+        print(user_creator, user_in_project)
+        if user_creator:
+            print("creator")
+            return self.get_tasks_creator(project_id)
+        elif user_in_project:
+            print("user")
+            return self.get_tasks_users(project_id)
 
-    def get_tasks(self, project_id):
+    def get_tasks_users(self, project_id):
+        tasks = self.database.execute('''
+                                select t."@Task" as task_id, 
+                                t."Name" as name, 
+                                '' as description, 
+                                --t."Attachments" as attachments, 
+                                u."Username" as responsible from "Task" t
+                                join "User" u on t."Responsible@"=u."@User" 
+                                where "Project@"=%s
+                                ''', (project_id,))
+        result = tasks.fetchall()
+        return result
+
+    def get_tasks_creator(self, project_id):
         tasks = self.database.execute('''
                                 select t."@Task" as task_id, 
                                 t."Name" as name, 
@@ -258,7 +278,6 @@ class Task:
         return result
 
     def search(self, query):
-        # search_query = '%'+query+'%'
         search = self.database.execute('''
                 select t."@Task" as task_id, 
                 t."Name" as name, 

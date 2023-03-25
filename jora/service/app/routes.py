@@ -4,7 +4,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 
 from service.app.dependencies import Authentication, Registration, JWTBearerAccess, Profile, Project, Task
-from service.app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel
+from service.app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, \
+                                TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel, FullTaskModel
 
 
 router = APIRouter(prefix="/api")
@@ -101,7 +102,7 @@ async def create_task(
         raise HTTPException(400)
 
 
-@router.get("/open_tasks", response_model=List[TaskModel])
+@router.get("/open_tasks", response_model=List[FullTaskModel])
 async def open_tasks(
         project_id: int,
         tasks: Task = Depends(Task),
@@ -109,19 +110,19 @@ async def open_tasks(
 ):
     result = tasks.open_tasks(project_id, jwt["username"])
     if result:
-        return (TaskModel(**element) for element in result)
+        return (FullTaskModel(**element) for element in result)
     else:
         raise HTTPException(400)
 
 
-@router.post("/create_report")
+@router.get("/create_report", response_model=List[FullTaskModel])
 async def create_report(
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
     ...
 
 
-@router.get("/search", response_model=List[TaskModel])
+@router.get("/search", response_model=List[FullTaskModel])
 async def search(
         search_query: str,
         tasks: Task = Depends(Task),
@@ -129,19 +130,19 @@ async def search(
 ):
     result = tasks.search(search_query)
     if result:
-        return (TaskModel(**element) for element in result)
+        return (FullTaskModel(**element) for element in result)
     else:
         raise HTTPException(404)
 
 
-@router.get("/debug", response_model=List[TaskModel])
+@router.get("/debug", response_model=List[FullTaskModel])
 async def search(
         project_id: int,
         tasks: Task = Depends(Task),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    result = tasks.get_tasks(project_id)
+    result = tasks.get_tasks_creator(project_id)
     if result:
-        return (TaskModel(**element) for element in result)
+        return (FullTaskModel(**element) for element in result)
     else:
-        return HTTPException(400)
+        raise HTTPException(400)

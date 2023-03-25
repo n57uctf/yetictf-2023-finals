@@ -38,7 +38,7 @@ class AccessToUsersModel(BaseModel):
     usernames: list
 
 
-class TaskModel(BaseModel):
+class FullTaskModel(BaseModel):
     task_id: int
     name: str
     description: str
@@ -46,8 +46,16 @@ class TaskModel(BaseModel):
     responsible: str
 
 
+class TaskModel(BaseModel):
+    task_id: int
+    name: str
+    # description: str
+    # attachments: list
+    responsible: str
+
+
 class NewTaskModel(BaseModel):
     name: str
-    description: str
+    # description: str
     # attachments: list
     responsible: str
