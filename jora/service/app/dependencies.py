@@ -201,13 +201,15 @@ class Task:
                     select "Username" from "User" where "@User"=(select creator_id from get_admin limit 1)''',
                                          (project_id,))
         print(name, description, attachments, project_id, creator_username, responsible_username)
-        if is_admin.fetchone()[0] == creator_username:
+        admin = is_admin.fetchone()[0]
+        if admin == creator_username:
             is_user_in_project = self.database.execute('''
                 with get_user as (select "@User" as user_id from "User" where "Username"=%s)
                 select "User@" from "UserProject" 
                 where "User@"=(select user_id from get_user limit 1) and "Project@"=%s
                 ''', (responsible_username, project_id))
-            if is_user_in_project.fetchone():
+            user = is_user_in_project.fetchone()
+            if user or responsible_username == admin:
                 try:
                     new_task = self.database.execute('''
                                 with get_user as (select "@User" as user_id from "User" where "Username"=%s)
@@ -238,20 +240,32 @@ class Task:
                     where "Creator@"=(select user_id from get_user limit 1) and "@Project"=%s
                     ''', (username, project_id))
         if is_user_in_project.fetchone() or is_user_creator.fetchone():
-            tasks = self.database.execute('''
-                        select "@Task" as task_id, 
-                        t."Name" as name, 
-                        t."Description" as description, 
-                        t."Attachments" as attachments, 
-                        u."Username" as responsible from "Task" t
-                        join "User" u on t."Responsible@"=u."@User" 
-                        where "Project@"=%s
-                        ''', (project_id,))
-            result = tasks.fetchall()
-            print(result)
-            return result
+            return self.get_tasks(project_id)
 
+    def get_tasks(self, project_id):
+        tasks = self.database.execute('''
+                                select t."@Task" as task_id, 
+                                t."Name" as name, 
+                                t."Description" as description, 
+                                t."Attachments" as attachments, 
+                                u."Username" as responsible from "Task" t
+                                join "User" u on t."Responsible@"=u."@User" 
+                                where "Project@"=%s
+                                ''', (project_id,))
+        result = tasks.fetchall()
+        return result
 
-class Debug:
-    def __init__(self, database: Database = Depends(Database)):
-        self.database = database
+    def search(self, query):
+        search = self.database.execute('''
+                with select_attach as (select unnest("Attachments") as attachment from "Task") 
+                select t."@Task" as task_id, 
+                t."Name" as name, 
+                t."Description" as description, 
+                t."Attachments" as attachments, 
+                u."Username" as responsible from "Task" t
+                join "User" u on t."Responsible@"=u."@User" 
+                where (t."Name" like %s) or (t."Description" like %s) or 
+                (t."Attachments" && (select array_agg(attachment) from select_attach where attachment like %s))
+                ''', ('%'+query+'%', '%'+query+'%', '%'+query+'%'))
+        result = search.fetchall()
+        return result

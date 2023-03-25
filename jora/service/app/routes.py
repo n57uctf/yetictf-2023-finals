@@ -8,7 +8,7 @@ import ctypes
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from service.app.dependencies import Database, Authentication, Registration, JWTBearerAccess, Profile, Project, Task, Debug
+from service.app.dependencies import Database, Authentication, Registration, JWTBearerAccess, Profile, Project, Task
 from service.app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel
 
 
@@ -57,8 +57,10 @@ async def create_project(
     created_project_data = project.create_project(new_project_data.name, new_project_data.description, jwt["username"])
     if created_project_data:
         created_project_data = ProjectModel(**created_project_data)
-        for i in users:
-            project.add_access_to_user(i, created_project_data.project_id, jwt["username"])
+        if users[0] != '':
+            for i in users:
+                project.add_access_to_user(i, created_project_data.project_id, jwt["username"])
+            return created_project_data
         return created_project_data
     else:
         raise HTTPException(400)
@@ -85,7 +87,7 @@ async def open_projects(
     if result:
         return (ProjectModel(**element) for element in result)
     else:
-        raise HTTPException(400, "Something went wrong")
+        raise HTTPException(400)
 
 
 @router.post("/create_task", response_model=TaskModel)
@@ -114,7 +116,7 @@ async def open_tasks(
     if result:
         return (TaskModel(**element) for element in result)
     else:
-        raise HTTPException(400, "Something went wrong")
+        raise HTTPException(400)
 
 
 @router.post("/create_report")
@@ -124,15 +126,27 @@ async def create_report(
     ...
 
 
-@router.get("/search")
+@router.get("/search", response_model=List[TaskModel])
 async def search(
+        search_query: str,
+        tasks: Task = Depends(Task),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    ...
+    result = tasks.search(search_query)
+    if result:
+        return (TaskModel(**element) for element in result)
+    else:
+        raise HTTPException(400)
 
 
-@router.get("/debug")
+@router.get("/debug", response_model=List[TaskModel])
 async def search(
+        project_id: int,
+        tasks: Task = Depends(Task),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    ...
+    result = tasks.get_tasks(project_id)
+    if result:
+        return (TaskModel(**element) for element in result)
+    else:
+        raise HTTPException(400)
