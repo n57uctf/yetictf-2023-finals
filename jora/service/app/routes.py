@@ -1,14 +1,9 @@
 import hashlib
 from typing import List
-from io import StringIO
-import random
-import string
-import ctypes
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
 
-from service.app.dependencies import Database, Authentication, Registration, JWTBearerAccess, Profile, Project, Task
+from service.app.dependencies import Authentication, Registration, JWTBearerAccess, Profile, Project, Task
 from service.app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel
 
 
