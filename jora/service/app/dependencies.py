@@ -175,14 +175,22 @@ class Project:
         else:
             raise HTTPException(400, "Not creator of the project")
 
-    def get_projects(self, username):
+    def get_projects_creator(self, username):
         try:
             projects = self.database.execute('''
                     with get_user as (select "@User" as user_id from "User" where "Username"=%s)
                     select "@Project" as project_id, "Name" as name, "Description" as description from "Project" 
                     where "Creator@"=(select user_id from get_user limit 1)
-                    union
-                    select p."@Project" as project_id, p."Name" as name, p."Description" as description from "Project" p
+                    ''', (username,))
+            return projects.fetchall()
+        except:
+            raise HTTPException(400)
+
+    def get_projects_user(self, username):
+        try:
+            projects = self.database.execute('''
+                    with get_user as (select "@User" as user_id from "User" where "Username"=%s)
+                    select p."@Project" as project_id, p."Name" as name, '' as description from "Project" p
                     join "UserProject" up on p."@Project"=up."Project@"
                     where up."User@"=(select user_id from get_user limit 1)
                     ''', (username,))
@@ -214,10 +222,10 @@ class Task:
                 try:
                     new_task = self.database.execute('''
                                 with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-                                insert into "Task" ("Name", "Description", "Project@", "Responsible@") --"Attachments",
+                                insert into "Task" ("Name", "Description", "Project@", "Responsible@")
                                 values (%s, %s, %s, (select user_id from get_user limit 1)) 
-                                returning "@Task" as task_id, "Name" as name, "Description" as description --"Attachments" as attachments
-                                ''', (responsible_username, name, description, project_id))  # attachments,
+                                returning "@Task" as task_id, "Name" as name, "Description" as description
+                                ''', (responsible_username, name, description, project_id))
                     task_data = dict(new_task.fetchone())
                     task_data.update({"responsible": responsible_username})
                     self.database.connection.commit()
@@ -255,8 +263,8 @@ class Task:
         tasks = self.database.execute('''
                                 select t."@Task" as task_id, 
                                 t."Name" as name, 
-                                '' as description, 
-                                --t."Attachments" as attachments, 
+                                t."Description" as description, 
+                                t."Attachments" as attachments, 
                                 u."Username" as responsible from "Task" t
                                 join "User" u on t."Responsible@"=u."@User" 
                                 where "Project@"=%s
@@ -269,7 +277,7 @@ class Task:
                                 select t."@Task" as task_id, 
                                 t."Name" as name, 
                                 t."Description" as description, 
-                                --t."Attachments" as attachments, 
+                                t."Attachments" as attachments, 
                                 u."Username" as responsible from "Task" t
                                 join "User" u on t."Responsible@"=u."@User" 
                                 where "Project@"=%s
@@ -279,13 +287,55 @@ class Task:
 
     def search(self, query):
         search = self.database.execute('''
+                with select_attach as (select unnest("Attachments") as attachment from "Task") 
                 select t."@Task" as task_id, 
                 t."Name" as name, 
                 t."Description" as description, 
+                t."Attachments" as attachments, 
                 u."Username" as responsible from "Task" t
                 join "User" u on t."Responsible@"=u."@User" 
-                where (t."Name" like %s) or (t."Description" like %s)
-                ''', ('%'+query+'%', '%'+query+'%'))
+                where (t."Name" like %s) or (t."Description" like %s) or 
+                (t."Attachments" && (select array_agg(attachment) from select_attach where attachment like %s))
+                ''', ('%'+query+'%', '%'+query+'%', '%'+query+'%'))
         result = search.fetchall()
         print(result)
         return result
+
+
+class ExportReport:
+    def __init__(self, database: Database = Depends(Database)):
+        self.database = database
+
+    def export_project(self, project_id, username):
+        try:
+            project_data = self.database.execute('''
+                    with get_user as (select "@User" as user_id from "User" where "Username"=%s)
+                    select "@Project" as project_id, "Name" as name, "Description" as description from "Project" 
+                    where "Creator@"=(select user_id from get_user limit 1) and "@Project"=%s
+                    union
+                    select p."@Project" as project_id, p."Name" as name, p."Description" as description from "Project" p
+                    join "UserProject" up on p."@Project"=up."Project@"
+                    where up."User@"=(select user_id from get_user limit 1) and up."Project@"=%s
+                    ''', (username, project_id, project_id))
+            project = project_data.fetchone()
+            self.database.connection.commit()
+            return project
+        except:
+            raise HTTPException(500)
+
+    def export_tasks(self, project_id, username):
+        try:
+            tasks_data = self.database.execute('''
+                    select t."@Task" as task_id, 
+                    t."Name" as name, 
+                    t."Description" as description, 
+                    t."Attachments" as attachments, 
+                    u."Username" as responsible from "Task" t
+                    join "User" u on t."Responsible@"=u."@User" 
+                    where "Project@"=%s
+            ''', (project_id,))
+            tasks = tasks_data.fetchall()
+            self.database.connection.commit()
+            return tasks
+        except:
+            raise HTTPException(500)

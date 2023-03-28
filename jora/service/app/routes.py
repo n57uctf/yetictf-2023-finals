@@ -1,9 +1,11 @@
 import hashlib
 from typing import List
+from io import StringIO
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 
-from service.app.dependencies import Authentication, Registration, JWTBearerAccess, Profile, Project, Task
+from service.app.dependencies import Authentication, Registration, JWTBearerAccess, Profile, Project, Task, ExportReport
 from service.app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, \
                                 TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel, FullTaskModel
 
@@ -79,11 +81,15 @@ async def open_projects(
         project: Project = Depends(Project),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    result = project.get_projects(jwt["username"])
-    if result:
-        return (ProjectModel(**element) for element in result)
+    result_creator = project.get_projects_creator(jwt["username"])
+    result_user = project.get_projects_user(jwt["username"])
+    if result_creator:
+        return [ProjectModel(**element) for element in result_creator]
+    elif result_user:
+        return [ProjectModel(**element) for element in result_user]
     else:
-        raise HTTPException(400)
+        raise HTTPException(404)
+
 
 
 @router.post("/create_task", response_model=TaskModel)
@@ -102,6 +108,16 @@ async def create_task(
         raise HTTPException(400)
 
 
+@router.post("/uploadfile")
+async def upload_file(
+        file: UploadFile,
+        jwt: JWTBearerAccess = Depends(JWTBearerAccess())
+):
+    with open('static/' + file.filename, "wb+") as wf:
+        wf.write(await file.read())
+    return {"filename": file.filename}
+
+
 @router.get("/open_tasks", response_model=List[FullTaskModel])
 async def open_tasks(
         project_id: int,
@@ -109,17 +125,25 @@ async def open_tasks(
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
     result = tasks.open_tasks(project_id, jwt["username"])
-    if result:
-        return (FullTaskModel(**element) for element in result)
-    else:
-        raise HTTPException(400)
+    return [FullTaskModel(**element) for element in result]
 
 
-@router.get("/create_report", response_model=List[FullTaskModel])
+@router.get("/create_report")
 async def create_report(
+        project_id: int,
+        report: ExportReport = Depends(ExportReport),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    ...
+    tasks_data = report.export_tasks(project_id, jwt["username"])
+    pr = ProjectModel(**report.export_project(project_id, jwt["username"]))
+    ts = [FullTaskModel(**element) for element in tasks_data]
+    text = str(pr)+str(ts)
+    text = text.replace('FullTaskModel', '\n')
+    text = text.replace('[', '\n')
+    text = text.replace(']', '\n')
+    text = text.replace(' ', '\n')
+    buf = StringIO(text)
+    return StreamingResponse(buf, media_type="application/octet-stream")
 
 
 @router.get("/search", response_model=List[FullTaskModel])
@@ -129,10 +153,7 @@ async def search(
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
     result = tasks.search(search_query)
-    if result:
-        return (FullTaskModel(**element) for element in result)
-    else:
-        raise HTTPException(404)
+    return [FullTaskModel(**element) for element in result]
 
 
 @router.get("/debug", response_model=List[FullTaskModel])
@@ -142,7 +163,4 @@ async def search(
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
     result = tasks.get_tasks_creator(project_id)
-    if result:
-        return (FullTaskModel(**element) for element in result)
-    else:
-        raise HTTPException(400)
+    return [FullTaskModel(**element) for element in result]

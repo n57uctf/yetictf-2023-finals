@@ -42,20 +42,20 @@ class FullTaskModel(BaseModel):
     task_id: int
     name: str
     description: str
-    # attachments: list
+    attachments: list | None
     responsible: str
 
 
 class TaskModel(BaseModel):
     task_id: int
     name: str
-    # description: str
+    description: str
     # attachments: list
     responsible: str
 
 
 class NewTaskModel(BaseModel):
     name: str
-    # description: str
+    description: str
     # attachments: list
     responsible: str
