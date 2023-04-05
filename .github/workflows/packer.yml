@@ -91,10 +91,10 @@ jobs:
   push:
     needs: build
     name: Push VM to s3
+    runs-on: [self-hosted, linux, X64, vbox, vagrant]
+    env:
+      ZIP_PASSWORD: Password123  # TODO: Fix hardcode password pls
     steps:
-      runs-on: [self-hosted, linux, X64, vbox, vagrant]
-      env:
-        ZIP_PASSWORD: Password123  # TODO: Fix hardcode password pls
       - name: Get current date
         id: today
         run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
