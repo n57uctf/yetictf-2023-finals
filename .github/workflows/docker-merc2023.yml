@@ -46,7 +46,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v4
         with:
-          context: ./merc2023/
+          context: ./merc2023/merc2023/
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -82,7 +82,7 @@ jobs:
         run: pip install -r ./merc2023/checker/requirements.txt
         
       - name: docker compose up
-        run: docker compose -f ./merc2023/docker-compose.yml up -d --remove-orphans --quiet-pull --no-build
+        run: docker compose -f ./merc2023/merc2023/docker-compose.yml up -d --remove-orphans --quiet-pull --no-build
       
       - run: docker ps
       
@@ -140,4 +140,4 @@ jobs:
           exit 0 
 
       - name: docker compose down
-        run: docker compose -f ./merc2023/docker-compose.yml down --remove-orphans --rmi all --volumes
+        run: docker compose -f ./merc2023/merc2023/docker-compose.yml down --remove-orphans --rmi all --volumes
