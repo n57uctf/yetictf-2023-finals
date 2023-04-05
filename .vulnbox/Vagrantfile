@@ -1,0 +1,21 @@
+$script = <<SCRIPT
+sudo pacman -Sy archlinux-keyring --noconfirm
+sudo pacman -S --noconfirm docker git docker-compose virtualbox-guest-utils-nox
+echo -e "y\\ny" | sudo pacman -Scc
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo sed -iold 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "archlinux/archlinux"
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false
+    vb.check_guest_additions = true
+    vb.memory = "2048"
+    vb.cpus = 1
+  end
+  config.vm.synced_folder "../", "/vagrant"
+
+  config.vm.provision "shell", inline: $script
+end

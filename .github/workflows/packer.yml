@@ -1,0 +1,104 @@
+name: packer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.vulnbox/**'
+      - '.github/workflows/packer.yml'
+  workflow_call:
+
+jobs:
+  packer:
+    runs-on: [self-hosted, linux, X64, vbox, vagrant]
+    env:
+      PKR_VAR_username: yeti
+      PKR_VAR_password: Password123 # TODO: Fix hardcode password pls
+      PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
+      ZIP_PASSWORD: Password123  # TODO: Fix hardcode password pls
+    name: Build VM
+    steps:
+      - name: Check build environment
+        run: |
+          vagrant -h > /dev/null
+          packer -h > /dev/null
+          vboxmanage > /dev/null
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache Vagrant boxes
+        uses: actions/cache@v2
+        with:
+          path: ~/.vagrant.d/boxes
+          key: ${{ runner.os }}-vagrant-${{ hashFiles('.vulnbox/Vagrantfile') }}
+          restore-keys: |
+            ${{ runner.os }}-vagrant-
+
+      - name: Check vagrant environment
+        run: |
+          vagrant version
+          vagrant global-status
+
+      - run: vagrant validate
+        working-directory: ./.vulnbox/
+
+      - run: vagrant up --no-provision
+        working-directory: ./.vulnbox/
+          
+      - run: vagrant provision
+        working-directory: ./.vulnbox/
+
+      - run: vagrant halt
+        working-directory: ./.vulnbox/
+
+      - run: vagrant status
+        working-directory: ./.vulnbox/
+        
+      - name: Get VM Name
+        id: vm-name
+        run: |
+          UUID=$(cat .vagrant/machines/default/virtualbox/id)
+          echo "vm_name=$( vboxmanage showvminfo $UUID --machinereadable | grep -o -E 'vulnbox_default_[0-9]{1,}_[0-9]{1,}' | uniq)" >> $GITHUB_OUTPUT
+        working-directory: ./.vulnbox/
+
+      - name: Check virtualbox machine settings
+        run: vboxmanage showvminfo ${{ steps.vm-name.outputs.vm_name }}
+
+      - name: packer init & validate
+        run: |
+          packer init .
+          packer validate .
+        env:
+          PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
+          PKR_VAR_vagrantbox: ${{ steps.vm-name.outputs.vm_name }}
+        working-directory: ./.vulnbox/
+
+      - run: packer build .
+        env:
+          PKR_VAR_vagrantbox: ${{ steps.vm-name.outputs.vm_name }}
+        working-directory: ./.vulnbox/
+
+      - run: vagrant destroy -f
+        if: ${{ always() }}
+        working-directory: ./.vulnbox/
+
+      - name: Get current date
+        id: today
+        run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: ZIP w\ password
+        run: zip -e -P $ZIP_PASSWORD ${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip ${PKR_VAR_event}.ova
+        working-directory: ./.vulnbox/output-vulnbox/
+
+      - name: Put to Yandex Object storage
+        run: aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip
+        working-directory: ./.vulnbox/output-vulnbox/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "ru-central1"
+
+      - run: rm -rf output-vulnbox
+        if: ${{ always() }}
+        working-directory: ./.vulnbox/

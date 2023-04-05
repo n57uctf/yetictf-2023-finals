@@ -8,6 +8,9 @@ YetiCTF 2023 Finals (School&amp;Student)
 │   ├── packer.yml
 │   ├── docker-service1.yml
 │   └── docker-service<N>.yml
+├── .vulnbox
+│   ├── Vagrantfile
+│   └── vulnbox.pkr.hcl
 ├── service1
 │   ├── service1
 │   ├── checker
@@ -18,5 +21,6 @@ YetiCTF 2023 Finals (School&amp;Student)
 │   ├── checker
 │   ├── sploits
 │   └── README.md
+├── .gitignore
 └── README.md
 ```
