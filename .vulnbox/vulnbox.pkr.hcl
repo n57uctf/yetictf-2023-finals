@@ -28,6 +28,10 @@ variable "vagrantbox" {
   type = string
 }
 
+variable "port" {
+  type = int
+}
+
 source "virtualbox-vm" "vulnbox" {
   vm_name = var.vagrantbox
   headless = true
@@ -37,7 +41,7 @@ source "virtualbox-vm" "vulnbox" {
   shutdown_command = "sudo shutdown -P now"
   guest_additions_mode = "disable"
   skip_nat_mapping = true
-  ssh_port = 2222
+  ssh_port = var.port
   vboxmanage_post = [
     ["modifyvm", "{{.Name}}", "--nic2", "bridged"],
     ["modifyvm", "{{.Name}}", "--bridgeadapter2", var.bridgeadapter],

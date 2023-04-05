@@ -59,15 +59,16 @@ jobs:
       - run: vagrant status
         working-directory: ./.vulnbox/
         
-      - name: Get VM Name
-        id: vm-name
+      - name: Get VM details
+        id: vm-details
         run: |
           UUID=$(cat .vagrant/machines/default/virtualbox/id)
           echo "vm_name=$( vboxmanage showvminfo $UUID --machinereadable | grep -o -E 'vulnbox_default_[0-9]{1,}_[0-9]{1,}' | uniq)" >> $GITHUB_OUTPUT
+          echo "ssh_port=$(vboxmanage showvminfo $UUID --machinereadable | grep Forwarding  | awk -F',' '{print $4}')" >> $GITHUB_OUTPUT
         working-directory: ./.vulnbox/
 
       - name: Check virtualbox machine settings
-        run: vboxmanage showvminfo ${{ steps.vm-name.outputs.vm_name }}
+        run: vboxmanage showvminfo ${{ steps.vm-details.outputs.vm_name }}
 
       - name: packer init & validate
         run: |
@@ -75,15 +76,17 @@ jobs:
           packer validate .
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
-          PKR_VAR_vagrantbox: ${{ steps.vm-name.outputs.vm_name }}
+          PKR_VAR_vagrantbox: ${{ steps.vm-details.outputs.vm_name }}
+          PKR_VAR_port: ${{ steps.vm-details.outputs.ssh_port }}
         working-directory: ./.vulnbox/
 
       - run: packer build .
         env:
-          PKR_VAR_vagrantbox: ${{ steps.vm-name.outputs.vm_name }}
+          PKR_VAR_vagrantbox: ${{ steps.vm-details.outputs.vm_name }}
+          PKR_VAR_port: ${{ steps.vm-details.outputs.ssh_port }}
         working-directory: ./.vulnbox/
 
-      - run: vagrant destroy -f
+      - run: vagrant halt -f && vagrant destroy -f
         if: ${{ always() }}
         working-directory: ./.vulnbox/
 
