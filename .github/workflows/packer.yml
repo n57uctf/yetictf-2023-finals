@@ -21,6 +21,9 @@ jobs:
     steps:
       - name: Check build environment
         run: |
+          rm -rf .vulnbox/output-vulnbox
+          rm -rf .vulnbox/.vagrant
+          rm -rf .vulnbox/packer_cache
           vagrant -h > /dev/null
           packer -h > /dev/null
           vboxmanage > /dev/null
@@ -95,6 +98,9 @@ jobs:
     env:
       ZIP_PASSWORD: Password123  # TODO: Fix hardcode password pls
     steps:
+      - name: Check aws cli
+        run: aws s3 help >/dev/null 
+
       - name: Get current date
         id: today
         run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
@@ -112,5 +118,4 @@ jobs:
           AWS_DEFAULT_REGION: "ru-central1"
 
       - run: rm -rf output-vulnbox
-        if: ${{ always() }}
         working-directory: ./.vulnbox/
