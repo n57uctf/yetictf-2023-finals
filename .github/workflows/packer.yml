@@ -102,3 +102,7 @@ jobs:
       - run: rm -rf output-vulnbox
         if: ${{ always() }}
         working-directory: ./.vulnbox/
+
+      - run: rm -rf .vagrant
+        if: ${{ always() }}
+        working-directory: ./.vulnbox/
