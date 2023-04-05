@@ -29,7 +29,7 @@ variable "vagrantbox" {
 }
 
 variable "port" {
-  type = int
+  type = number
 }
 
 source "virtualbox-vm" "vulnbox" {
