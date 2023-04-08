@@ -1,0 +1,49 @@
+<div class="page">
+  <h1>Приветствую, username</h1>
+  <mat-accordion multi>
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Create new Project
+        </mat-panel-title>
+        <mat-panel-description></mat-panel-description>
+      </mat-expansion-panel-header>
+      <div class="Form">
+        <mat-form-field appearance="fill">
+          <mat-label>Project Name</mat-label>
+          <input matInput placeholder="Name">
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Description</mat-label>
+          <input matInput placeholder="Description">
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Project participants</mat-label>
+          <input matInput placeholder="Participants usernames (example: ivan, katya, igor)">
+        </mat-form-field>
+      </div>
+        <button mat-flat-button color="primary" type="button">Создать проект</button>
+    </mat-expansion-panel>
+
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      Project name
+    </mat-panel-title>
+    <mat-panel-description>
+      Description for creator
+    </mat-panel-description>
+  </mat-expansion-panel-header>
+  <mat-grid-list cols="13" rowHeight="50px">
+    <mat-grid-tile
+        *ngFor="let tile of tiles"
+        [colspan]="tile.cols"
+        [rowspan]="tile.rows"
+        [style.background]="tile.color">
+      {{tile.text}}
+    </mat-grid-tile>
+  </mat-grid-list>
+  <button mat-flat-button color="primary" type="button" (click)="openDialog()">Добавить</button>
+</mat-expansion-panel>
+</mat-accordion>
+</div>
