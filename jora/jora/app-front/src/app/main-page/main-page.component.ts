@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
+import {CreateTaskDialogComponent} from "../create-task-dialog/create-task-dialog.component";
+import {SearchTaskComponent} from "../search-task/search-task.component";
 
 export interface Tile {
   color: string;
@@ -15,6 +17,7 @@ export interface Tile {
   styleUrls: ['./main-page.component.sass']
 })
 export class MainPageComponent {
+
   tiles: Tile[] = [
     {text: '#', cols: 1, rows: 1, color: '#7c84ff'},
     {text: 'Name', cols: 3, rows: 1, color: '#7c84ff'},
@@ -32,16 +35,9 @@ export class MainPageComponent {
   }
 
   openDialog() {
-    this.dialog.open(CreateTaskDialog);
+    this.dialog.open(CreateTaskDialogComponent);
   }
-}
 
-@Component({
-  selector: 'create-task-dialog',
-  templateUrl: './create-task-dialog.html',
-  styleUrls: ['./create-task-dialog.html']
-})
-export class CreateTaskDialog {
 
 }
 

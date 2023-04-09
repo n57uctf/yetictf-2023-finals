@@ -23,26 +23,20 @@ class AccessTokenModel(BaseModel):
     token: str
 
 
-class ProjectModel(BaseModel):
-    project_id: int
-    name: str
-    description: str
-
-
 class NewProjectModel(BaseModel):
     name: str
     description: str
 
 
 class AccessToUsersModel(BaseModel):
-    usernames: list
+    usernames: list[str]
 
 
 class FullTaskModel(BaseModel):
     task_id: int
     name: str
     description: str
-    attachments: list | None
+    attachments: list[str]  # | None
     responsible: str
 
 
@@ -50,12 +44,21 @@ class TaskModel(BaseModel):
     task_id: int
     name: str
     description: str
-    # attachments: list
+    attachments: list[str]
     responsible: str
+
+
+class ProjectModel(BaseModel):
+    project_id: int
+    name: str
+    description: str
+    creator: bool
+    tasks: list[TaskModel]
+    type: str
 
 
 class NewTaskModel(BaseModel):
     name: str
     description: str
-    # attachments: list
     responsible: str
+    # attachments: list[str]

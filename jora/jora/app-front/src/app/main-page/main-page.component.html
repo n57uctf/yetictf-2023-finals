@@ -1,49 +1,75 @@
 <div class="page">
   <h1>Приветствую, username</h1>
   <mat-accordion multi>
+
+
     <mat-expansion-panel>
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Create new Project
+          Create new project
         </mat-panel-title>
         <mat-panel-description></mat-panel-description>
       </mat-expansion-panel-header>
       <div class="Form">
         <mat-form-field appearance="fill">
-          <mat-label>Project Name</mat-label>
-          <input matInput placeholder="Name">
+          <mat-label>Name</mat-label>
+          <input matInput placeholder="Project Name">
         </mat-form-field>
         <mat-form-field appearance="fill">
           <mat-label>Description</mat-label>
-          <input matInput placeholder="Description">
+          <input matInput placeholder="Project Description">
         </mat-form-field>
         <mat-form-field appearance="fill">
-          <mat-label>Project participants</mat-label>
+          <mat-label>Participants</mat-label>
           <input matInput placeholder="Participants usernames (example: ivan, katya, igor)">
         </mat-form-field>
       </div>
-        <button mat-flat-button color="primary" type="button">Создать проект</button>
+        <button mat-flat-button color="primary" type="button">Create ptoject</button>
     </mat-expansion-panel>
 
-<mat-expansion-panel>
-  <mat-expansion-panel-header>
-    <mat-panel-title>
-      Project name
-    </mat-panel-title>
-    <mat-panel-description>
-      Description for creator
-    </mat-panel-description>
-  </mat-expansion-panel-header>
-  <mat-grid-list cols="13" rowHeight="50px">
-    <mat-grid-tile
-        *ngFor="let tile of tiles"
-        [colspan]="tile.cols"
-        [rowspan]="tile.rows"
-        [style.background]="tile.color">
-      {{tile.text}}
-    </mat-grid-tile>
-  </mat-grid-list>
-  <button mat-flat-button color="primary" type="button" (click)="openDialog()">Добавить</button>
-</mat-expansion-panel>
-</mat-accordion>
+
+    <mat-expansion-panel [expanded]=true>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Search
+        </mat-panel-title>
+        <mat-panel-description>
+            Search tasks in your projects
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <div>
+        <mat-form-field appearance="outline" class="search-input">
+          <input matInput placeholder="Введите текст поиска">
+          <button matSuffix mat-icon-button class="search">
+            <mat-icon>search</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
+    </mat-expansion-panel>
+
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Project name
+        </mat-panel-title>
+        <mat-panel-description>
+          Description for creator
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <mat-grid-list cols="13" rowHeight="50px">
+        <mat-grid-tile
+            *ngFor="let tile of tiles"
+            [colspan]="tile.cols"
+            [rowspan]="tile.rows"
+            [style.background]="tile.color">
+          {{tile.text}}
+        </mat-grid-tile>
+      </mat-grid-list>
+      <div class="button-group">
+        <button mat-flat-button color="primary" type="button" (click)="openDialog()">Add Task</button>
+        <button mat-flat-button color="primary" type="button">Download Report</button>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
 </div>

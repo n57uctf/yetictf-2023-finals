@@ -1,9 +1,10 @@
 import hashlib
 from typing import List
 from io import StringIO
+import glob
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 
 from app.dependencies import Authentication, Registration, JWTBearerAccess, Profile, Project, Task, ExportReport
 from app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, \
@@ -55,10 +56,8 @@ async def create_project(
     created_project_data = project.create_project(new_project_data.name, new_project_data.description, jwt["username"])
     if created_project_data:
         created_project_data = ProjectModel(**created_project_data)
-        if users[0] != '':
-            for i in users:
-                project.add_access_to_user(i, created_project_data.project_id, jwt["username"])
-            return created_project_data
+        for i in users:
+            project.add_access_to_user(i, created_project_data.project_id, jwt["username"])
         return created_project_data
     else:
         raise HTTPException(400)
@@ -81,15 +80,11 @@ async def open_projects(
         project: Project = Depends(Project),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    result_creator = project.get_projects_creator(jwt["username"])
-    result_user = project.get_projects_user(jwt["username"])
-    if result_creator:
-        return [ProjectModel(**element) for element in result_creator]
-    elif result_user:
-        return [ProjectModel(**element) for element in result_user]
+    result = project.get_projects(jwt["username"])
+    if result:
+        return [ProjectModel(**element) for element in result]
     else:
         raise HTTPException(404)
-
 
 
 @router.post("/create_task", response_model=TaskModel)
@@ -100,7 +95,7 @@ async def create_task(
         new_task: Task = Depends(Task)
 ):
     created_task_data = new_task.create_task(new_task_data.name, new_task_data.description, project_id, jwt["username"],
-                                             new_task_data.responsible)
+                                             new_task_data.responsible)   # , [file.filename])
     if created_task_data:
         print(dict(created_task_data))
         return TaskModel(**created_task_data)
@@ -110,22 +105,16 @@ async def create_task(
 
 @router.post("/uploadfile")
 async def upload_file(
+        project_id: int,
+        task_id: int,
         file: UploadFile,
-        jwt: JWTBearerAccess = Depends(JWTBearerAccess())
+        jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
+        update_task: Task = Depends(Task)
 ):
     with open('static/' + file.filename, "wb+") as wf:
         wf.write(await file.read())
-    return {"filename": file.filename}
-
-
-@router.get("/open_tasks", response_model=List[FullTaskModel])
-async def open_tasks(
-        project_id: int,
-        tasks: Task = Depends(Task),
-        jwt: JWTBearerAccess = Depends(JWTBearerAccess())
-):
-    result = tasks.open_tasks(project_id, jwt["username"])
-    return [FullTaskModel(**element) for element in result]
+    result = update_task.upload_attachment(jwt["username"], task_id, file.filename)
+    return result
 
 
 @router.get("/create_report")
@@ -134,33 +123,35 @@ async def create_report(
         report: ExportReport = Depends(ExportReport),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    tasks_data = report.export_tasks(project_id, jwt["username"])
-    pr = ProjectModel(**report.export_project(project_id, jwt["username"]))
-    ts = [FullTaskModel(**element) for element in tasks_data]
-    text = str(pr)+str(ts)
-    text = text.replace('FullTaskModel', '\n')
+    pr = ProjectModel(**report.get_project(project_id))
+    text = str(pr)
+    text = text.replace('TaskModel', '\n')
     text = text.replace('[', '\n')
     text = text.replace(']', '\n')
-    text = text.replace(' ', '\n')
+    text = text.replace(', ', '\n')
     buf = StringIO(text)
     return StreamingResponse(buf, media_type="application/octet-stream")
 
 
-@router.get("/search", response_model=List[FullTaskModel])
-async def search(
-        search_query: str,
-        tasks: Task = Depends(Task),
+@router.get("/download")
+async def download(
+        filename: str,
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    result = tasks.search(search_query)
-    return [FullTaskModel(**element) for element in result]
+    res = glob.glob(f'static\\{filename}')
+    if res:
+        return FileResponse(res[0], filename=filename, media_type="application/octet-stream")
+    raise HTTPException(404)
 
 
-@router.get("/debug", response_model=List[FullTaskModel])
-async def search(
+@router.get("/debug", response_model=List[ProjectModel])
+async def debug(
         project_id: int,
-        tasks: Task = Depends(Task),
+        report: ExportReport = Depends(ExportReport),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    result = tasks.get_tasks_creator(project_id)
-    return [FullTaskModel(**element) for element in result]
+    result = report.get_project(project_id)
+    if result:
+        return [ProjectModel(**result)]
+    else:
+        raise HTTPException(404)

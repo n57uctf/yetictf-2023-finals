@@ -6,8 +6,7 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LoginPageComponent } from './login-page/login-page.component';
 import { RegisterPageComponent } from './register-page/register-page.component';
-import {CreateTaskDialog, MainPageComponent} from './main-page/main-page.component';
-import { ProjectPageComponent } from './project-page/project-page.component';
+import {MainPageComponent} from './main-page/main-page.component';
 import {MatButtonModule} from '@angular/material/button';
 import {MatInputModule} from '@angular/material/input';
 import {MatFormFieldModule} from '@angular/material/form-field';
@@ -16,6 +15,9 @@ import {MatExpansionModule} from '@angular/material/expansion';
 import {MatCardModule} from '@angular/material/card';
 import {MatTableModule} from '@angular/material/table';
 import {MatDialogModule} from '@angular/material/dialog';
+import { CreateTaskDialogComponent } from './create-task-dialog/create-task-dialog.component';
+import {MatIconModule} from '@angular/material/icon';
+import { SearchTaskComponent } from './search-task/search-task.component';
 
 @NgModule({
   declarations: [
@@ -23,8 +25,8 @@ import {MatDialogModule} from '@angular/material/dialog';
     LoginPageComponent,
     RegisterPageComponent,
     MainPageComponent,
-    ProjectPageComponent,
-    CreateTaskDialog
+    CreateTaskDialogComponent,
+    SearchTaskComponent
   ],
   imports: [
     BrowserModule,
@@ -37,7 +39,8 @@ import {MatDialogModule} from '@angular/material/dialog';
     MatExpansionModule,
     MatCardModule,
     MatTableModule,
-    MatDialogModule
+    MatDialogModule,
+    MatIconModule
   ],
   providers: [],
   bootstrap: [AppComponent]
