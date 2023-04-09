@@ -1,0 +1,24 @@
+{
+    "game_config": {
+      "flag_lifetime": 5,
+      "round_time": 30,
+      "game_start": "2023-04-09T00:00:00.000000",
+      "game_end": "2023-04-30T00:00:00.000000",
+      "default_score": 2500,
+      "quant_point": 100
+    },
+    "teams": [
+      {
+        "name": "example",
+        "host": "127.0.0.1",
+        "token": "qwe"
+      }
+    ],
+    "services": [
+      {
+        "name": "merc2023",
+        "port": 6666,
+        "checker_file": "merc2023.py"
+      }
+    ]
+  }
