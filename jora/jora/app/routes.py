@@ -5,8 +5,8 @@ from io import StringIO
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
-from service.app.dependencies import Authentication, Registration, JWTBearerAccess, Profile, Project, Task, ExportReport
-from service.app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, \
+from app.dependencies import Authentication, Registration, JWTBearerAccess, Profile, Project, Task, ExportReport
+from app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, \
                                 TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel, FullTaskModel
 
 
