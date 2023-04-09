@@ -1,0 +1,3 @@
+FROM ghcr.io/n57uctf/worker:dev
+COPY ../merc2023/checker/requirements.txt /code/checkers/merc2023-requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /code/checkers/merc2023-requirements.txt 
