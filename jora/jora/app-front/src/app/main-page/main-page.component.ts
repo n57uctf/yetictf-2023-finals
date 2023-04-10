@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {CreateTaskDialogComponent} from "../create-task-dialog/create-task-dialog.component";
-import {SearchTaskComponent} from "../search-task/search-task.component";
 
 export interface Tile {
   color: string;

@@ -17,7 +17,6 @@ import {MatTableModule} from '@angular/material/table';
 import {MatDialogModule} from '@angular/material/dialog';
 import { CreateTaskDialogComponent } from './create-task-dialog/create-task-dialog.component';
 import {MatIconModule} from '@angular/material/icon';
-import { SearchTaskComponent } from './search-task/search-task.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +25,6 @@ import { SearchTaskComponent } from './search-task/search-task.component';
     RegisterPageComponent,
     MainPageComponent,
     CreateTaskDialogComponent,
-    SearchTaskComponent
   ],
   imports: [
     BrowserModule,
