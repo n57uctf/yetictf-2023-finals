@@ -32,4 +32,3 @@ DB_PORT=5432
 login: admin
 password: admin
 ```
-
