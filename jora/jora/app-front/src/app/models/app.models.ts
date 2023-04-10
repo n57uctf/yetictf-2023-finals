@@ -26,15 +26,29 @@ export interface IProjectModel {
   project_id: number
   name: string
   description: string
+  creator: boolean
+  tasks: {
+      task_id: number
+      name: string
+      description: string
+      attachments: string[]
+      responsible: string
+    }[]
+  type: string
 }
 
 export interface INewProjectModel {
+  usernames: string[]
   name: string
   description: string
 }
 
-export interface IAccessToUsersModel {
-  usernames: string[]
+export interface IAddProject {
+  users: string[]
+  new_project_data: {
+    name: string,
+    description: string
+  }
 }
 
 export interface IFullTaskModel {
@@ -55,6 +69,5 @@ export interface ITaskModel {
 export interface INewTaskModel {
   name: string
   description: string
-  attachments: string[]
   responsible: string
 }
