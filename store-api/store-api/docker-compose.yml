@@ -1,0 +1,53 @@
+version: "3.1"
+
+services:
+
+  db:
+    container_name: database
+    image: postgres
+    ports:
+      - 5432:5432
+    env_file:
+      - ".env"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data/
+    networks:
+      - store
+    restart: always
+
+  django:
+    container_name: django
+    build:
+      context: .
+    ports:
+      - 8000:8000
+    env_file:
+      - ".env"
+    volumes:
+      - .:/src
+    networks:
+      - store
+    restart: always
+    depends_on:
+      - db
+
+  nginx:
+    build:
+      context: ./nginx/
+      dockerfile: Dockerfile
+    networks:
+      - store
+    depends_on:
+      - db
+      - django
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./static/:/static
+    restart: always
+
+networks:
+  store:
+    driver: bridge
+
+
