@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 
 from app.dependencies import Database, JWTBearerAccess, Authentication, Link, ExportStorage
 from app.models import CredentialModel, UserModel, AccessTokenModel, StorageModel, CreateStorageModel, ShareLinkModel, \
-    ExportLinkModel, RegisteredUsersModel
+    ExportLinkModel, RegisteredUsersModel, DecryptModel, DecryptedDataModel
 
 router = APIRouter(prefix="/api")
 
@@ -122,6 +122,16 @@ async def export(
     return ExportLinkModel(link=storage.create_link(username))
 
 
+@router.post("/decrypt", response_model=DecryptedDataModel)
+async def decrypt(
+        data: DecryptModel,
+        storage: ExportStorage = Depends(ExportStorage)
+):
+    key = storage.key_gen(data.master_password)
+    decrypt_data = storage.encrypt(data.data, key)
+    return DecryptedDataModel(data=decrypt_data)
+
+
 @router.get("/file")
 async def download_file(
         link: str,
@@ -130,14 +140,11 @@ async def download_file(
     username = link.split("/").pop()
     data_to_export = storage.create_export(username)
     master_password = storage.get_master_password(username)
-    print(master_password[0])
     text = "Наш сервис “PasswordManager” предназначен для хранения ваших паролей в защищенном месте. \nОчень жаль, что " \
            "вы забыли свой пароль, но как видите выгрузить свое хранилище очень легко и без пароля, нужен лишь " \
            "мастер пароль для расшифровки. \nВы можете заново пройти регистрацию и добавить эти пароли в новое " \
            "хранилище, чтобы вам было удобнее.\n\n"
     value = "\n".join(': '.join(password_title) for password_title in data_to_export)
     key = storage.key_gen(master_password[0])
-    encrypted = storage.encrypt(text+value, key)
-    print(storage.encrypt(encrypted, key))
     buf = StringIO(storage.encrypt(text+value, key))
     return StreamingResponse(buf, media_type="application/octet-stream")

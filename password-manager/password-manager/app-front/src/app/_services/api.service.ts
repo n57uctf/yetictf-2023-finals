@@ -61,4 +61,8 @@ export class ApiService {
     return this.httpClient.get<IRegisteredUsersModel[]>(environment.apiEndpoint + '/get_users')
   }
 
+  decryptBackup(masertPassword: string, backup: string) {
+    return this.httpClient.post<{data: string}>(environment.apiEndpoint + '/decrypt', {master_password: masertPassword, data: backup})
+  }
+
 }

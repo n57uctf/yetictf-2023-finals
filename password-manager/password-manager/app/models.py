@@ -39,3 +39,12 @@ class ExportLinkModel(BaseModel):
 
 class RegisteredUsersModel(BaseModel):
     username: str
+
+
+class DecryptModel(BaseModel):
+    master_password: str
+    data: str
+
+
+class DecryptedDataModel(BaseModel):
+    data: str
