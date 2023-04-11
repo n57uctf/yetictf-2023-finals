@@ -179,6 +179,7 @@ class ExportStorage:
         for i in range(8):
             for j in range(4):
                 new_key += key[i * 4 + 3 - j]
+        print(new_key)
         return new_key
 
     def encrypt(self, text, key):

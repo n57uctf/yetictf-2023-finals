@@ -185,6 +185,7 @@ def push(args: PushArgs) -> CheckerResult:
                                  private_info=f'{r.status_code}',
                                  public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
         data = get_json(r)
+        master_password = data["masterpass"]
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
@@ -255,7 +256,14 @@ def push(args: PushArgs) -> CheckerResult:
                                  public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
         data = get_json(r)
         r = requests.get(f'{url}/file?link={data["link"]}')
-        print("response", r.text)
+        print("response-file", r.text)
+        if r.status_code != 200:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        print(master_password)
+        r = requests.post(f'{url}/decrypt', json={"master_password": master_password, "data": r.text})
+        print("response-decrypt", r.json()["data"])
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
