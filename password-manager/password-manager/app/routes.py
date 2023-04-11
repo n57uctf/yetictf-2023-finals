@@ -1,6 +1,6 @@
 import hashlib
 from typing import List
-from io import BytesIO
+from io import StringIO
 import random
 import string
 import ctypes
@@ -130,18 +130,14 @@ async def download_file(
     username = link.split("/").pop()
     data_to_export = storage.create_export(username)
     master_password = storage.get_master_password(username)
+    print(master_password[0])
     text = "Наш сервис “PasswordManager” предназначен для хранения ваших паролей в защищенном месте. \nОчень жаль, что " \
            "вы забыли свой пароль, но как видите выгрузить свое хранилище очень легко и без пароля, нужен лишь " \
            "мастер пароль для расшифровки. \nВы можете заново пройти регистрацию и добавить эти пароли в новое " \
            "хранилище, чтобы вам было удобнее.\n\n"
     value = "\n".join(': '.join(password_title) for password_title in data_to_export)
-    crypt = ctypes.CDLL('bin/Cript.so')
-    crypt.encrypt.restype = ctypes.c_char_p
-    crypt.encrypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ]
-    buf = BytesIO(
-        crypt.encrypt(
-            (text+value).encode(),
-            master_password[0].encode()
-        )
-    )
+    key = storage.key_gen(master_password[0])
+    encrypted = storage.encrypt(text+value, key)
+    print(storage.encrypt(encrypted, key))
+    buf = StringIO(storage.encrypt(text+value, key))
     return StreamingResponse(buf, media_type="application/octet-stream")
