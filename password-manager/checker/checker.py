@@ -128,7 +128,7 @@ def push(args: PushArgs) -> CheckerResult:
                              public_info=f'PUSH {Status.ERROR.value} checker can not generate creds')
 
     res = CheckerResult(status=Status.OK.value,
-                        private_info=f"{creds}",
+                        private_info=json.dumps(creds),
                         public_info='PUSH works')
 
     # Get Users
