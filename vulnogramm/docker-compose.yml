@@ -7,17 +7,17 @@ services:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=Vulnogramm
+    expose:
+      - 5432
     volumes:
       - ./init-databases-tables.sh:/docker-entrypoint-initdb.d/init-databases-tables.sh
-    ports:
-      - 54322:5432
   web:
     build: ./Exsample/Exsample/.
     restart: always
     volumes:
       - .:/code
-    ports:
-      - 7180:7180
+    expose:
+      - 7180
     depends_on:
       - db
   frontend:
@@ -26,5 +26,3 @@ services:
       - .:/frontend
     ports:
       - 3000:3000
-    depends_on:
-      - web
