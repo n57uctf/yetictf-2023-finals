@@ -8,15 +8,6 @@ x-healthcheck:
   retries: 5
   start_period: 10s
 
-x-psqlenv: 
-  &psqlenv
-  POSTGRES_ROOT_PASSWORD: ${DB_PASSWORD:-postgres}
-  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-  POSTGRES_USER: ${POSTGRES_USER:-user}
-  POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-  POSTGRES_DB: ${POSTGRES_DB:-merc}
-
 networks:
   default:
     ipam:
@@ -32,7 +23,12 @@ services:
         - DB_PASSWORD
         - APACHE_RUN_USER
     environment:
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-merc}
+
       APACHE_RUN_USER: ${APACHE_RUN_USER:-merc}
       APACHE_RUN_GROUP: ${APACHE_RUN_USER:-merc}
     ports:
@@ -48,16 +44,18 @@ services:
 
 
   postgres:
-    image: postgres:12
+    image: postgres:15.2
+    hostname: postgres
     environment:
-      << : *psqlenv
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - "./db.sh:/docker-entrypoint-initdb.d/initdb.sh"
       - "./util/encoder:/tmp/encoder"
     restart: always
     healthcheck:
       << : *healthcheck
-      test: pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-5432}
+      test: pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-merc}
       start_period: 30s
 
   adminer:

@@ -61,7 +61,7 @@ MD=($(tmp/encoder MichaelDawson$MDdob))
 Meltdown=($(tmp/encoder NormaJessop$Meltdowndob))
 Gaston=($(tmp/encoder GastonCavalier$Gastondob))
 
-psql "postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB?sslmode=disable" <<-EOSQL
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER"  <<-EOSQL
 --
 -- PostgreSQL database cluster dump
 --
@@ -70,18 +70,6 @@ SET default_transaction_read_only = off;
 
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
-
---
--- Roles
---
-
-CREATE ROLE "user";
-ALTER ROLE "user" WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'md50b48fb93e317aa444f910d5f4e6efbdb';
-
-
-
-
-
 
 --
 -- Databases
@@ -144,8 +132,6 @@ SET row_security = off;
 CREATE DATABASE merc WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.utf8' LC_CTYPE = 'en_US.utf8';
 
 
-ALTER DATABASE merc OWNER TO "user";
-
 \connect merc
 
 SET statement_timeout = 0;
@@ -171,8 +157,6 @@ CREATE SEQUENCE public.chat_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.chat_id_seq OWNER TO "user";
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -191,8 +175,6 @@ CREATE TABLE public.messages (
 );
 
 
-ALTER TABLE public.messages OWNER TO "user";
-
 --
 -- Name: chat_id_seq1; Type: SEQUENCE; Schema: public; Owner: user
 --
@@ -205,8 +187,6 @@ CREATE SEQUENCE public.chat_id_seq1
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.chat_id_seq1 OWNER TO "user";
 
 --
 -- Name: chat_id_seq1; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
@@ -229,8 +209,6 @@ CREATE TABLE public.commandos (
 );
 
 
-ALTER TABLE public.commandos OWNER TO "user";
-
 --
 -- Name: commandos_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
@@ -243,8 +221,6 @@ CREATE SEQUENCE public.commandos_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.commandos_id_seq OWNER TO "user";
 
 --
 -- Name: commandos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
@@ -268,8 +244,6 @@ CREATE TABLE public.contracts (
 );
 
 
-ALTER TABLE public.contracts OWNER TO "user";
-
 --
 -- Name: contracts_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
@@ -282,8 +256,6 @@ CREATE SEQUENCE public.contracts_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.contracts_id_seq OWNER TO "user";
 
 --
 -- Name: contracts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
@@ -304,8 +276,6 @@ CREATE SEQUENCE public.drivers_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.drivers_id_seq OWNER TO "user";
-
 --
 -- Name: merchants_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
@@ -318,8 +288,6 @@ CREATE SEQUENCE public.merchants_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.merchants_id_seq OWNER TO "user";
-
 --
 -- Name: parsels_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
@@ -331,8 +299,6 @@ CREATE SEQUENCE public.parsels_id_seq
     MAXVALUE 2147483647
     CACHE 1;
 
-
-ALTER TABLE public.parsels_id_seq OWNER TO "user";
 
 --
 -- Name: profiles; Type: TABLE; Schema: public; Owner: user
@@ -348,8 +314,6 @@ CREATE TABLE public.profiles (
 );
 
 
-ALTER TABLE public.profiles OWNER TO "user";
-
 --
 -- Name: profiles_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
@@ -362,8 +326,6 @@ CREATE SEQUENCE public.profiles_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.profiles_id_seq OWNER TO "user";
 
 --
 -- Name: profiles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
@@ -383,8 +345,6 @@ CREATE TABLE public.tokens (
 );
 
 
-ALTER TABLE public.tokens OWNER TO "user";
-
 --
 -- Name: tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
@@ -397,528 +357,6 @@ CREATE SEQUENCE public.tokens_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.tokens_id_seq OWNER TO "user";
-
---
--- Name: tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
---
-
-ALTER SEQUENCE public.tokens_id_seq OWNED BY public.tokens.id;
-
-
---
--- Name: commandos id; Type: DEFAULT; Schema: public; Owner: user
---
-
-ALTER TABLE ONLY public.commandos ALTER COLUMN id SET DEFAULT nextval('public.commandos_id_seq'::regclass);
-
-
---
--- Name: contracts id; Type: DEFAULT; Schema: public; Owner: user
---
-
-ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.contracts_id_seq'::regclass);
-
-
---
--- Name: messages id; Type: DEFAULT; Schema: public; Owner: user
---
-
-ALTER TABLE ONLY public.messages ALTER COLUMN id SET DEFAULT nextval('public.chat_id_seq1'::regclass);
-
-
---
--- Name: profiles id; Type: DEFAULT; Schema: public; Owner: user
---
-
-ALTER TABLE ONLY public.profiles ALTER COLUMN id SET DEFAULT nextval('public.profiles_id_seq'::regclass);
-
-
---
--- Name: tokens id; Type: DEFAULT; Schema: public; Owner: user
---
-
-ALTER TABLE ONLY public.tokens ALTER COLUMN id SET DEFAULT nextval('public.tokens_id_seq'::regclass);
-
-
---
--- Data for Name: commandos; Type: TABLE DATA; Schema: public; Owner: user
---
-
-COPY public.commandos (id, alias, price, xp, status, spec) FROM stdin;
-\.
-
-
---
--- Data for Name: contracts; Type: TABLE DATA; Schema: public; Owner: user
---
-
-COPY public.contracts (id, contractor_token, executor_token, location, payment, commentary, status) FROM stdin;
-\.
-
-
---
--- Data for Name: messages; Type: TABLE DATA; Schema: public; Owner: user
---
-
-COPY public.messages (id, sender_id, receiver_id, theme, message, timemark) FROM stdin;
-\.
-
-
---
--- Data for Name: profiles; Type: TABLE DATA; Schema: public; Owner: user
---
-
-COPY public.profiles (id, token, first_name, last_name, dob, description) FROM stdin;
-\.
-
-
---
--- Data for Name: tokens; Type: TABLE DATA; Schema: public; Owner: user
---
-
-COPY public.tokens (id, token, status) FROM stdin;
-\.
-
-
---
--- Name: chat_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.chat_id_seq', 1, false);
-
-
---
--- Name: chat_id_seq1; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.chat_id_seq1', 16, true);
-
-
---
--- Name: commandos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.commandos_id_seq', 4, true);
-
-
---
--- Name: contracts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.contracts_id_seq', 8, true);
-
-
---
--- Name: drivers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.drivers_id_seq', 1, false);
-
-
---
--- Name: merchants_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.merchants_id_seq', 1, false);
-
-
---
--- Name: parsels_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.parsels_id_seq', 1, false);
-
-
---
--- Name: profiles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.profiles_id_seq', 29, true);
-
-
---
--- Name: tokens_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
---
-
-SELECT pg_catalog.setval('public.tokens_id_seq', 11, true);
-
-
---
--- PostgreSQL database dump complete
---
-
---
--- Database "postgres" dump
---
-
-\connect postgres
-
---
--- PostgreSQL database dump
---
-
--- Dumped from database version 12.13 (Debian 12.13-1.pgdg110+1)
--- Dumped by pg_dump version 12.13 (Debian 12.13-1.pgdg110+1)
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- PostgreSQL database dump complete
---
-
---
--- PostgreSQL database cluster dump complete
---
-
-pg_dumpall -U user
---
--- PostgreSQL database cluster dump
---
-
-SET default_transaction_read_only = off;
-
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-
---
--- Roles
---
-
-CREATE ROLE "user";
-ALTER ROLE "user" WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'md50b48fb93e317aa444f910d5f4e6efbdb';
-
-
-
-
-
-
---
--- Databases
---
-
---
--- Database "template1" dump
---
-
-\connect template1
-
---
--- PostgreSQL database dump
---
-
--- Dumped from database version 12.13 (Debian 12.13-1.pgdg110+1)
--- Dumped by pg_dump version 12.13 (Debian 12.13-1.pgdg110+1)
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- PostgreSQL database dump complete
---
-
---
--- Database "merc" dump
---
-
---
--- PostgreSQL database dump
---
-
--- Dumped from database version 12.13 (Debian 12.13-1.pgdg110+1)
--- Dumped by pg_dump version 12.13 (Debian 12.13-1.pgdg110+1)
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- Name: merc; Type: DATABASE; Schema: -; Owner: user
---
-
-CREATE DATABASE merc WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.utf8' LC_CTYPE = 'en_US.utf8';
-
-
-ALTER DATABASE merc OWNER TO "user";
-
-\connect merc
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- Name: chat_id_seq; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.chat_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    MAXVALUE 2147483647
-    CACHE 1;
-
-
-ALTER TABLE public.chat_id_seq OWNER TO "user";
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
---
--- Name: messages; Type: TABLE; Schema: public; Owner: user
---
-
-CREATE TABLE public.messages (
-    id integer NOT NULL,
-    sender_id character varying(255) NOT NULL,
-    receiver_id character varying(255) NOT NULL,
-    theme character varying(255) NOT NULL,
-    message character varying(255) NOT NULL,
-    timemark character varying(255) NOT NULL
-);
-
-
-ALTER TABLE public.messages OWNER TO "user";
-
---
--- Name: chat_id_seq1; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.chat_id_seq1
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.chat_id_seq1 OWNER TO "user";
-
---
--- Name: chat_id_seq1; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
---
-
-ALTER SEQUENCE public.chat_id_seq1 OWNED BY public.messages.id;
-
-
---
--- Name: commandos; Type: TABLE; Schema: public; Owner: user
---
-
-CREATE TABLE public.commandos (
-    id integer NOT NULL,
-    alias character varying(255) NOT NULL,
-    price character varying(255) NOT NULL,
-    xp character varying(255) NOT NULL,
-    status integer NOT NULL,
-    spec character varying(255) NOT NULL
-);
-
-
-ALTER TABLE public.commandos OWNER TO "user";
-
---
--- Name: commandos_id_seq; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.commandos_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.commandos_id_seq OWNER TO "user";
-
---
--- Name: commandos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
---
-
-ALTER SEQUENCE public.commandos_id_seq OWNED BY public.commandos.id;
-
-
---
--- Name: contracts; Type: TABLE; Schema: public; Owner: user
---
-
-CREATE TABLE public.contracts (
-    id integer NOT NULL,
-    contractor_token character varying(255) NOT NULL,
-    executor_token character varying(255) NOT NULL,
-    location character varying(255) NOT NULL,
-    payment integer NOT NULL,
-    commentary character varying(255) NOT NULL,
-    status character varying(255) DEFAULT 'pending'::character varying NOT NULL
-);
-
-
-ALTER TABLE public.contracts OWNER TO "user";
-
---
--- Name: contracts_id_seq; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.contracts_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.contracts_id_seq OWNER TO "user";
-
---
--- Name: contracts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
---
-
-ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
-
-
---
--- Name: drivers_id_seq; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.drivers_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    MAXVALUE 2147483647
-    CACHE 1;
-
-
-ALTER TABLE public.drivers_id_seq OWNER TO "user";
-
---
--- Name: merchants_id_seq; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.merchants_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    MAXVALUE 2147483647
-    CACHE 1;
-
-
-ALTER TABLE public.merchants_id_seq OWNER TO "user";
-
---
--- Name: parsels_id_seq; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.parsels_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    MAXVALUE 2147483647
-    CACHE 1;
-
-
-ALTER TABLE public.parsels_id_seq OWNER TO "user";
-
---
--- Name: profiles; Type: TABLE; Schema: public; Owner: user
---
-
-CREATE TABLE public.profiles (
-    id integer NOT NULL,
-    token character varying(255) NOT NULL,
-    first_name character varying(255) NOT NULL,
-    last_name character varying(255) NOT NULL,
-    dob character varying(255) NOT NULL,
-    description character varying(255) NOT NULL
-);
-
-
-ALTER TABLE public.profiles OWNER TO "user";
-
---
--- Name: profiles_id_seq; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.profiles_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.profiles_id_seq OWNER TO "user";
-
---
--- Name: profiles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
---
-
-ALTER SEQUENCE public.profiles_id_seq OWNED BY public.profiles.id;
-
-
---
--- Name: tokens; Type: TABLE; Schema: public; Owner: user
---
-
-CREATE TABLE public.tokens (
-    id integer NOT NULL,
-    token character varying(255) NOT NULL,
-    status character varying(255) NOT NULL
-);
-
-
-ALTER TABLE public.tokens OWNER TO "user";
-
---
--- Name: tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: user
---
-
-CREATE SEQUENCE public.tokens_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.tokens_id_seq OWNER TO "user";
 
 --
 -- Name: tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
@@ -1096,63 +534,63 @@ COPY public.tokens (id, token, status) FROM stdin;
 -- Name: chat_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.chat_id_seq', 100, false);
+SELECT pg_catalog.setval('public.chat_id_seq', 1, false);
 
 
 --
 -- Name: chat_id_seq1; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.chat_id_seq1', 100, true);
+SELECT pg_catalog.setval('public.chat_id_seq1', 16, true);
 
 
 --
 -- Name: commandos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.commandos_id_seq', 100, true);
+SELECT pg_catalog.setval('public.commandos_id_seq', 4, true);
 
 
 --
 -- Name: contracts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.contracts_id_seq', 100, true);
+SELECT pg_catalog.setval('public.contracts_id_seq', 8, true);
 
 
 --
 -- Name: drivers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.drivers_id_seq', 100, false);
+SELECT pg_catalog.setval('public.drivers_id_seq', 1, false);
 
 
 --
 -- Name: merchants_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.merchants_id_seq', 100, false);
+SELECT pg_catalog.setval('public.merchants_id_seq', 1, false);
 
 
 --
 -- Name: parsels_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.parsels_id_seq', 100, false);
+SELECT pg_catalog.setval('public.parsels_id_seq', 1, false);
 
 
 --
 -- Name: profiles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.profiles_id_seq', 100, true);
+SELECT pg_catalog.setval('public.profiles_id_seq', 29, true);
 
 
 --
 -- Name: tokens_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.tokens_id_seq', 100, true);
+SELECT pg_catalog.setval('public.tokens_id_seq', 11, true);
 
 
 --
@@ -1189,4 +627,4 @@ SET row_security = off;
 
 --
 -- PostgreSQL database cluster dump complete
---"
+--
