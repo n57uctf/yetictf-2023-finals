@@ -46,12 +46,7 @@ class ClientsRegistrationAPIView(GenericAPIView):
                 return Response(status=status.HTTP_201_CREATED, data=response_data)
             except IntegrityError:
                 return Response({
-                    'errors': [
-                        {
-                            'field': 'email',
-                            'message': 'Email already in use'
-                        }
-                    ]
+                    'email': 'Email already in use'
                 }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         else:
             return Response(client_serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)

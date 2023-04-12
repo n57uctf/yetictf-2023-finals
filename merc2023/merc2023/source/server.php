@@ -3,7 +3,7 @@ session_start();
 
 $errors = array(); 
 
-$_SESSION['db_string'] = @"host=postgres port=5432 dbname=merc user=user password=".getenv('DB_PASSWORD');
+$_SESSION['db_string'] = @"host=".getenv('POSTGRES_HOST')." port=".getenv('POSTGRES_PORT')." dbname=".getenv('POSTGRES_DB')." user=".getenv('POSTGRES_USER')." password=".getenv('POSTGRES_PASSWORD');
 
 $db_connect = @pg_connect($_SESSION['db_string']);
 

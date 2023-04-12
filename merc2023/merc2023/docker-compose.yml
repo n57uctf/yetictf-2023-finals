@@ -1,4 +1,12 @@
-version: '3.5'
+version: '3.8'
+
+x-healthcheck: 
+  &healthcheck
+  test: curl -f http://localhost/
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 10s
 
 networks:
   default:
@@ -13,32 +21,50 @@ services:
       dockerfile: Dockerfile
       args:
         - DB_PASSWORD
+        - APACHE_RUN_USER
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-merc}
+
+      APACHE_RUN_USER: ${APACHE_RUN_USER:-merc}
+      APACHE_RUN_GROUP: ${APACHE_RUN_USER:-merc}
     ports:
       - "6666:80"
     volumes:
       - "./source:/var/www/html"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: always
+    healthcheck:
+      << : *healthcheck
+
 
   postgres:
-    image: postgres:12
+    image: postgres:15.2
+    hostname: postgres
     environment:
-      POSTGRES_ROOT_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_USER: "user"
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: "merc"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - "./db.sh:/docker-entrypoint-initdb.d/initdb.sh"
       - "./util/encoder:/tmp/encoder"
     restart: always
+    healthcheck:
+      << : *healthcheck
+      test: pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-merc}
+      start_period: 30s
 
   adminer:
     image: adminer:4.7.8
     environment:
-      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DEFAULT_SERVER: ${POSTGRES_HOST:-postgres}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - "6667:8080"
     restart: always
