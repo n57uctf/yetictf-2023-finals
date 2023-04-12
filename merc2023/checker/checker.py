@@ -4,7 +4,6 @@ from checklib import Status, rnd_username, rnd_string, rnd_useragent
 from pathlib import Path
 import secrets
 from typing import NamedTuple
-import json
 import io
 import os
 
@@ -41,7 +40,6 @@ class CheckMachine:
 
         resp = sess.get(f'{self.url}/security.php')
         check_status_code(resp, "Couldn't get security page")
-        print(resp.text)
         if re.findall(r'Your account access token is \<strong\>',resp.text):
             return(resp.text.split('Your account access token is <strong>')[1].split('</strong>')[0])
         else:
