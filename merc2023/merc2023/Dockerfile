@@ -9,8 +9,8 @@ RUN docker-php-ext-install -j10 gd
 RUN docker-php-ext-install -j10 pgsql &&\
     docker-php-ext-install -j10 pdo_pgsql
 
-ARG POSTGRES_PASSWORD
-ENV POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+ARG DB_PASSWORD
+ENV DB_PASSWORD=${DB_PASSWORD}
 
 ARG APACHE_RUN_USER
 ENV APACHE_RUN_USER=${APACHE_RUN_USER}

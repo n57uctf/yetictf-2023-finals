@@ -43,6 +43,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: Extract build args 
+        id: build-args
+        run: cat ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/.env >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         id: build-and-push
@@ -54,6 +57,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
+          build-args: | 
+            "DB_PASSWORD=${{ steps.build-args.outputs.DB_PASSWORD }}"
+            "APACHE_RUN_USER=${{ steps.build-args.outputs.APACHE_RUN_USER }}"
 
   checker:
     needs: build
