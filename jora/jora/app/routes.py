@@ -63,28 +63,13 @@ async def create_project(
         raise HTTPException(400)
 
 
-@router.post("/add_user_to_project", response_model=AccessToUsersModel)
-async def add_user_to_project(
-        users: list,
-        project_id: int,
-        jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
-        project: Project = Depends(Project)
-):
-    for i in users:
-        project.add_access_to_user(str(i), project_id, jwt["username"])
-    return AccessToUsersModel(usernames=users)
-
-
 @router.get("/open_projects", response_model=List[ProjectModel])
 async def open_projects(
         project: Project = Depends(Project),
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
     result = project.get_projects(jwt["username"])
-    if result:
-        return [ProjectModel(**element) for element in result]
-    else:
-        raise HTTPException(404)
+    return [ProjectModel(**element) for element in result]
 
 
 @router.post("/create_task", response_model=TaskModel)
