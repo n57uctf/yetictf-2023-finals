@@ -117,6 +117,7 @@ jobs:
           from checkers.checker import push,PushArgs;
           r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
           open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
+          print(r);
           exit(r.status)'
 
           exitcode=$?
@@ -134,6 +135,7 @@ jobs:
           from checkers.checker import pull,PullArgs;
           r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info='\''${{ steps.checker-push-0.outputs.private_info }}'\'',flag="${{ github.sha }}"));
           open("/out/pull_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
+          print(r);
           exit(r.status)'
           
           exitcode=$?
@@ -150,6 +152,7 @@ jobs:
           from checkers.checker import push,PushArgs;
           r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
           open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
+          print(r);
           exit(r.status)'
 
           exitcode=$?
@@ -167,6 +170,7 @@ jobs:
           from checkers.checker import pull,PullArgs;
           r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info='\''${{ steps.checker-push-1.outputs.private_info }}'\'',flag="${{ github.sha }}"));
           open("/out/pull_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
+          print(r);
           exit(r.status)'
           
           exitcode=$?
