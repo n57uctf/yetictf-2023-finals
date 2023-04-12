@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=Vulnogramm
+    volumes:
+      - ./init-databases-tables.sh:/docker-entrypoint-initdb.d/init-databases-tables.sh
+    ports:
+      - 54322:5432
+  web:
+    build: ./Exsample/Exsample/.
+    restart: always
+    volumes:
+      - .:/code
+    ports:
+      - 7180:7180
+    depends_on:
+      - db
+  frontend:
+    build: ./Vulnogramm_front/vulnogramm/.
+    volumes:
+      - .:/frontend
+    ports:
+      - 3000:3000
+    depends_on:
+      - web
