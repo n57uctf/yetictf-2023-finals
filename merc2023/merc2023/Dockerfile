@@ -10,15 +10,18 @@ RUN docker-php-ext-install -j10 pgsql &&\
     docker-php-ext-install -j10 pdo_pgsql
 
 ARG DB_PASSWORD
-
 ENV DB_PASSWORD=${DB_PASSWORD}
+
+ARG APACHE_RUN_USER
+ENV APACHE_RUN_USER=${APACHE_RUN_USER}
 
 RUN a2enmod rewrite
 ADD ./source /var/www/html
 
-RUN useradd -ms /bin/bash merc
-RUN chown -R merc:merc /var/www/html
+RUN useradd -ms /bin/bash $APACHE_RUN_USER
+RUN chown -R $APACHE_RUN_USER:$APACHE_RUN_USER /var/www/html
 RUN chmod -R 777 /var/www/html
 RUN service apache2 restart
+RUN chown -R $APACHE_RUN_USER:$APACHE_RUN_USER /var/run/apache2/
 
-USER merc
+USER $APACHE_RUN_USER

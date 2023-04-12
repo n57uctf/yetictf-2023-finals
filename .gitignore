@@ -2,3 +2,7 @@ packer_cache
 output-vulnbox
 *.iso
 *.ova
+
+# devops stuff
+Pipfile
+merc2023/merc2023/source/applications
