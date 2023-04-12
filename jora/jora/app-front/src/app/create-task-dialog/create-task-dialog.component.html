@@ -2,21 +2,21 @@
 <mat-dialog-content class="mat-typography">
     <mat-form-field appearance="fill">
       <mat-label>Name</mat-label>
-      <input matInput placeholder="Task Name">
+      <input matInput placeholder="Task Name" #_name>
     </mat-form-field><br />
     <mat-form-field appearance="fill">
       <mat-label>Description</mat-label>
-      <input matInput placeholder="Task Description">
+      <input matInput placeholder="Task Description" #_desc> 
     </mat-form-field><br />
     <mat-form-field appearance="fill">
       <mat-label>Responsible</mat-label>
-      <input matInput placeholder="Responsible">
+      <input matInput placeholder="Responsible" #_resp>
     </mat-form-field>
 </mat-dialog-content>
 
   <mat-dialog-actions align="end">
     <button mat-flat-button mat-dialog-close>Cancel</button>
-    <button mat-flat-button color="primary" type="button">Add Task</button>
+    <button mat-flat-button color="primary" type="button" (click)="addTask(_name.value, _desc.value, _resp.value); _name.value=''; _desc.value=''; _resp.value=''">Add Task</button>
   </mat-dialog-actions>
 
 

@@ -1,16 +1,17 @@
 import hashlib
 from typing import List
-from io import BytesIO
+from io import StringIO
 import random
 import string
 import ctypes
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
 from app.dependencies import Database, JWTBearerAccess, Authentication, Link, ExportStorage
 from app.models import CredentialModel, UserModel, AccessTokenModel, StorageModel, CreateStorageModel, ShareLinkModel, \
-    ExportLinkModel, RegisteredUsersModel
+    ExportLinkModel, RegisteredUsersModel, DecryptModel, DecryptedDataModel
 
 router = APIRouter(prefix="/api")
 
@@ -56,7 +57,7 @@ async def register(
         creds: CredentialModel,
         database: Database = Depends(Database)
 ):
-    random_masterpass = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(32))
+    random_masterpass = ''.join(random.choice(string.digits) for i in range(32))
     cursor = database.execute('''
         insert into "User" 
         ("Username", "Password", "MasterPassword") 
@@ -122,6 +123,16 @@ async def export(
     return ExportLinkModel(link=storage.create_link(username))
 
 
+@router.post("/decrypt", response_model=DecryptedDataModel)
+async def decrypt(
+        data: DecryptModel,
+        storage: ExportStorage = Depends(ExportStorage)
+):
+    # key = storage.key_gen(data.master_password)
+    decrypt_data = storage.encrypt(data.data, data.master_password)
+    return DecryptedDataModel(data=decrypt_data)
+
+
 @router.get("/file")
 async def download_file(
         link: str,
@@ -135,13 +146,7 @@ async def download_file(
            "мастер пароль для расшифровки. \nВы можете заново пройти регистрацию и добавить эти пароли в новое " \
            "хранилище, чтобы вам было удобнее.\n\n"
     value = "\n".join(': '.join(password_title) for password_title in data_to_export)
-    crypt = ctypes.CDLL('bin/Cript.so')
-    crypt.encrypt.restype = ctypes.c_char_p
-    crypt.encrypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ]
-    buf = BytesIO(
-        crypt.encrypt(
-            (text+value).encode(),
-            master_password[0].encode()
-        )
-    )
+    # key = storage.key_gen(master_password[0])
+    key = master_password[0]
+    buf = StringIO(storage.encrypt(text+value, key))
     return StreamingResponse(buf, media_type="application/octet-stream")

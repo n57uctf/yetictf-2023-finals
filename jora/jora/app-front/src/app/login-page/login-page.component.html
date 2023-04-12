@@ -2,14 +2,14 @@
     <h1>Аутентификация</h1>
     <mat-form-field appearance="fill">
       <mat-label>Username</mat-label>
-      <input matInput placeholder="Username">
+      <input matInput placeholder="Username" #_username>
     </mat-form-field>
     <mat-form-field appearance="fill">
       <mat-label>Password</mat-label>
-      <input matInput placeholder="Password">
+      <input matInput placeholder="Password" #_password>
     </mat-form-field>
-    <button mat-flat-button color="accent" type="button">Войти</button>
-    <button mat-stroked-button color="accent" type="button">Нет аккаунта?</button>
+    <button mat-flat-button color="accent" type="button" (click)="login(_username.value, _password.value)">Войти</button>
+    <button mat-stroked-button color="accent" type="button" [routerLink]="'/register'">Нет аккаунта?</button>
 </div>
 
 

@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse, FileResponse
 
 from app.dependencies import Authentication, Registration, JWTBearerAccess, Profile, Project, Task, ExportReport
-from app.models import CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel, \
-                                TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel, FullTaskModel
+from app.models import (CredentialModel, UserModel, AccessTokenModel, RegistrationModel, ProjectModel,
+                        TaskModel, NewProjectModel, AccessToUsersModel, NewTaskModel)
 
 
 router = APIRouter(prefix="/api")
@@ -105,7 +105,6 @@ async def create_task(
 
 @router.post("/uploadfile")
 async def upload_file(
-        project_id: int,
         task_id: int,
         file: UploadFile,
         jwt: JWTBearerAccess = Depends(JWTBearerAccess()),
@@ -138,7 +137,8 @@ async def download(
         filename: str,
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
-    res = glob.glob(f'static\\{filename}')
+    res = glob.glob(f'static/{filename}')
+    print(res)
     if res:
         return FileResponse(res[0], filename=filename, media_type="application/octet-stream")
     raise HTTPException(404)

@@ -6,4 +6,14 @@
         <input matInput #_username>
     </mat-form-field>
     <button mat-stroked-button (click)="getBackup(_username.value)">Получить ссылку</button>
+    <h2>Для расшифровки бэкапа приложите файл бэкапа и мастер пароль</h2>
+    <mat-form-field appearance="fill">
+        <mat-label>Мастер-пароль</mat-label>
+        <input matInput #_master_password>
+    </mat-form-field>
+    <input type="file" #_backup>
+    <button mat-stroked-button (click)="decryptBackup(_master_password.value, _backup.files[0])">Расшифровать</button>
+    <p *ngIf="decrypted">
+        {{ decrypted }}
+    </p>
 </div>

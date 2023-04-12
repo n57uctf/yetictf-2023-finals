@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -17,6 +18,8 @@ import {MatTableModule} from '@angular/material/table';
 import {MatDialogModule} from '@angular/material/dialog';
 import { CreateTaskDialogComponent } from './create-task-dialog/create-task-dialog.component';
 import {MatIconModule} from '@angular/material/icon';
+import {MatSnackBarModule} from '@angular/material/snack-bar'; 
+
 
 @NgModule({
   declarations: [
@@ -38,7 +41,9 @@ import {MatIconModule} from '@angular/material/icon';
     MatCardModule,
     MatTableModule,
     MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    HttpClientModule,
+    MatSnackBarModule
   ],
   providers: [],
   bootstrap: [AppComponent]
