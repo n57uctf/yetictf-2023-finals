@@ -58,6 +58,7 @@ services:
     healthcheck:
       << : *healthcheck
       test: pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-5432}
+      start_period: 30s
 
   adminer:
     image: adminer:4.7.8
