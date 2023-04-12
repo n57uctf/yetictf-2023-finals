@@ -9,7 +9,10 @@ class Products(models.Model):
     """
     name = models.CharField(verbose_name='Name', max_length=255)
     description = models.TextField(verbose_name='Description', null=True, blank=True)
-    price = models.PositiveIntegerField(verbose_name='Price', default=0)
+    price = models.PositiveIntegerField(verbose_name='Price', default=3000, validators=[
+                MaxValueValidator(100_000),
+                MinValueValidator(3000)
+            ])
     is_premium = models.BooleanField(verbose_name='IsPremium', default=False)
     extra_info = models.CharField(verbose_name='Extra info', null=True, blank=True, max_length=100)
 
