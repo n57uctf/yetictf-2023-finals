@@ -50,5 +50,5 @@ urlpatterns = [
     path('api/v1/basket/', include('basket.urls')),
     path('api/v1/clients/', include('clients.urls')),
     path('api/v1/promocodes/', include('promocodes.urls')),
-    path('api/checker/', include('checker.urls')),
+    path('api/v1/checker/', include('checker.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
