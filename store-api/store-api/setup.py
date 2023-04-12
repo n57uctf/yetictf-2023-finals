@@ -7,18 +7,15 @@ This module:
 """
 
 import os
-import django
-from django.contrib.auth import get_user_model
-
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'store.settings')
-
 
 if os.path.exists('inithialized'):
     os.system('gunicorn store.wsgi:application -b 0.0.0.0:8000 --reload')
     exit(0)
 
 
+import django
+from django.contrib.auth import get_user_model
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'store.settings')
 django.setup()
 from products.models import Products
 from promocodes.models import PromoCodes
@@ -37,12 +34,9 @@ except:
     ...
 
 
-Products.objects.create(name='Product 1', description='Description for product 1', price=1000)
-Products.objects.create(name='Product 2', description='Description for product 2', price=2000)
-Products.objects.create(name='Product 3', description='Description for product 3', price=3000)
-
-Products.objects.create(name='Premium product', description='Premium product',
-                        price=25_000, is_premium=True, extra_info='{FLAG_HERE}')
+Products.objects.create(name='Product 1', description='Description for product 1', price=3000)
+Products.objects.create(name='Product 2', description='Description for product 2', price=5000)
+Products.objects.create(name='Product 3', description='Description for product 3', price=10_000)
 
 
 PromoCodes.objects.create(code='promo1', amount=500)

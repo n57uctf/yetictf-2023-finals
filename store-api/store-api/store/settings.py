@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'basket',
     'promocodes',
     'orders',
+    'checker',
 ]
 
 MIDDLEWARE = [
