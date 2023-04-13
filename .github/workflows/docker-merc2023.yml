@@ -80,6 +80,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: docker compose up
+        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
+        env: 
+          TAG: ${{ steps.meta.outputs.tags }}
+
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
       - name: Get Host IP addr
         id: ip-addr
         run: |
@@ -87,9 +99,7 @@ jobs:
           ipaddr=$(ip -4 addr show $if | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
           echo "ipaddr=$ipaddr" >> $GITHUB_OUTPUT
     
-      - name: docker compose up
-        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
-        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
       
       - run: docker compose ps
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
