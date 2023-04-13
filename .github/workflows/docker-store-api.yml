@@ -131,6 +131,13 @@ jobs:
         run: if [[ -f host_prepare.sh ]]; then bash host_prepare.sh; fi
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
         
+      - name: docker compose up
+        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
+        env: 
+          IMAGE_BACKEND: ${{ steps.meta-backend.outputs.tags }}
+          IMAGE_FRONTEND: ${{ steps.meta-frontend.outputs.tags }}
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
       - name: Setting up checker Dockerfile
         run: |
           cat << EOF > Dockerfile.${{ env.SERVICE_NAME }}
@@ -143,13 +150,6 @@ jobs:
           image=$(docker build -q -f Dockerfile.${{ env.SERVICE_NAME }} .)
           echo "image=$image" >> $GITHUB_OUTPUT
         id: checker-image
-
-      - name: docker compose up
-        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
-        env: 
-          IMAGE_BACKEND: ${{ steps.meta-backend.outputs.tags }}
-          IMAGE_FRONTEND: ${{ steps.meta-frontend.outputs.tags }}
-        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
       - name: Get Host IP addr
         id: ip-addr

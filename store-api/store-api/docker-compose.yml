@@ -17,10 +17,6 @@ services:
       - 5432:5432
     env_file:
       - ".env"
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data/
-    networks:
-      - store
     restart: always
     healthcheck:
       << : *healthcheck
@@ -37,20 +33,19 @@ services:
       - ".env"
     volumes:
       - .:/src
-    networks:
-      - store
     restart: always
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      << : *healthcheck
+      test: curl http://127.0.0.1:8000/
 
   nginx:
     image: ${IMAGE_FRONTEND:-ghcr.io/n57uctf/store-api-frontend:main}
     build:
       context: ./nginx/
       dockerfile: Dockerfile
-    networks:
-      - store
     depends_on:
       django:
         condition: service_started
@@ -59,9 +54,7 @@ services:
     volumes:
       - ./static/:/static
     restart: always
-
-networks:
-  store:
-    driver: bridge
-
+    healthcheck:
+      << : *healthcheck
+      test: curl http://127.0.0.1:8080/
 
