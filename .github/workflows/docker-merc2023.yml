@@ -89,7 +89,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Prepare host
-        run: if [[ -f prepare_host.sh ]]; then bash prepare_host.sh; fi
+        run: if [[ -f host_prepare.sh ]]; then bash host_prepare.sh; fi
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
       - name: docker compose up
@@ -206,11 +206,11 @@ jobs:
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
 
-      - run: (DEBUG) docker compose logs webserver
+      - run: docker compose logs webserver
         if: ${{ failure() }}
         working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
-      - run: (DEBUG) docker compose logs postgres
+      - run: docker compose logs postgres
         if: ${{ failure() }}
         working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
