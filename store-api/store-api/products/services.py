@@ -2,8 +2,26 @@
 This module contains additional functions for products app
 """
 from __future__ import annotations
-from typing import List
-from .models import Products, ProductsReviews
+from .models import Products
+
+
+def save_product(name: str, description: str, price: int) -> Products:
+    """Save product to `Products` model
+    :param name: product name
+    :type name: str
+    :param description: product description
+    :type description: str
+    :param price: product price (in range from 3000 to 1_000_000)
+    :type price: int
+    :raises ValidationError: if price not in [3000, 1_000_000] range
+    :return: instance of `Products` model
+    :rtype: Products
+    """
+    return Products.objects.create(
+        name=name,
+        description=description,
+        price=price
+    )
 
 
 def get_product_by_id_or_none(product_id: int) -> Products | None:
@@ -15,35 +33,6 @@ def get_product_by_id_or_none(product_id: int) -> Products | None:
     :rtype: Products or None
     """
     return Products.objects.filter(pk=product_id).first()
-
-
-def get_all_reviews(**filters) -> List[ProductsReviews]:
-    """Filter reviews in `ProductsReviews` model and return list of found reviews
-    :return:  list of found ProductsReviews
-    :rtype: List[ProductsReviews]
-    """
-    return list(ProductsReviews.objects.filter(**filters))
-
-
-def save_product_review(product_id: int, client_id: int, text: str, rating: int) -> ProductsReviews:
-    """Create record in `ProductsReviews` model
-    :param product_id: product id in `Products` model
-    :type product_id: int
-    :param client_id: client id in `Clients` model
-    :type client_id: int
-    :param text: text of review
-    :type text: int
-    :param rating: rating of review
-    :type rating: int
-    :return: instance of `ProductsReviews`
-    :rtype: ProductsReviews
-    """
-    return ProductsReviews.objects.create(
-        product_id=product_id,
-        client_id=client_id,
-        text=text,
-        rating=rating
-    )
 
 
 

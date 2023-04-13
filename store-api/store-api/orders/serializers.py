@@ -25,6 +25,11 @@ class OrderProductsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class OrderPaymentResultsSerializer(serializers.Serializer):
+    product = OrderProductsSerializer()
+    secret_key = serializers.CharField()
+
+
 class ReturnProductSerializer(serializers.Serializer):
     client_id = serializers.IntegerField()
     product_id = serializers.IntegerField()

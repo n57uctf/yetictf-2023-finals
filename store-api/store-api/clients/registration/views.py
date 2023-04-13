@@ -7,9 +7,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
-from tokens.jwt import JWT
-from tokens.services import create_refresh_token
-from .serializers import ClientRegistrationSerializer
+from .serializers import ClientRegistrationSerializer, ClientSerializer
 
 
 class ClientsRegistrationAPIView(GenericAPIView):
@@ -17,17 +15,7 @@ class ClientsRegistrationAPIView(GenericAPIView):
 
     @swagger_auto_schema(
         responses={
-            status.HTTP_201_CREATED: openapi.Response(
-                description='Client created',
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'access_token': openapi.Schema(type=openapi.TYPE_STRING),
-                        'refresh_token': openapi.Schema(type=openapi.TYPE_STRING),
-                        'client_id': openapi.Schema(type=openapi.TYPE_NUMBER),
-                    },
-                ),
-            ),
+            status.HTTP_201_CREATED: ClientSerializer(),
             status.HTTP_422_UNPROCESSABLE_ENTITY: 'Invalid arguments'
         }
     )
@@ -37,13 +25,8 @@ class ClientsRegistrationAPIView(GenericAPIView):
         if client_serializer.is_valid():
             try:
                 client = client_serializer.save()
-                jwt = JWT({
-                    'user_id': client.pk
-                })
-                create_refresh_token(client_id=client.id, token=jwt.refresh_token)
-                response_data = jwt.as_dict()
-                response_data['client_id'] = client.pk
-                return Response(status=status.HTTP_201_CREATED, data=response_data)
+                serializer = ClientSerializer(client)
+                return Response(status=status.HTTP_201_CREATED, data=serializer.data)
             except IntegrityError:
                 return Response({
                     'email': 'Email already in use'

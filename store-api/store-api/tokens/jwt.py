@@ -63,7 +63,7 @@ class JWT:
     def time_to_left(self) -> int:
         expiration_time = self._payload.get('exp')
         current_time = datetime.now(timezone.utc).timestamp()
-        return int(expiration_time - current_time)
+        return expiration_time - current_time
 
     def is_available(self) -> bool:
         """Check is access_token is still available

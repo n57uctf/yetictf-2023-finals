@@ -26,9 +26,9 @@ from store.settings import env
 
 schema_view = get_schema_view(
     openapi.Info(
-      title="Snippets API",
+      title="Store API",
       default_version='v1',
-      description="Test description",
+      description="Try to find the flag using our API!",
       terms_of_service="https://www.google.com/policies/terms/",
       contact=openapi.Contact(email="contact@snippets.local"),
       license=openapi.License(name="BSD License"),
@@ -38,11 +38,11 @@ schema_view = get_schema_view(
     permission_classes=[permissions.AllowAny],
 )
 
-
 urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('admin/', admin.site.urls),
     path('api/v1/products/', include('products.urls')),
+    path('api/v1/reviews/', include('reviews.urls')),
     path('api/v1/auth/', include('clients.auth.urls')),
     path('api/v1/registration/', include('clients.registration.urls')),
     path('api/v1/orders/', include('orders.urls')),
@@ -50,5 +50,4 @@ urlpatterns = [
     path('api/v1/basket/', include('basket.urls')),
     path('api/v1/clients/', include('clients.urls')),
     path('api/v1/promocodes/', include('promocodes.urls')),
-    path('api/v1/checker/', include('checker.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
