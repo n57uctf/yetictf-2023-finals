@@ -144,7 +144,7 @@ jobs:
           set +e
           docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
           from checkers.checker import pull,PullArgs;
-          r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info='$(echo ${{ steps.checker-push.outputs.private_info }} | base64 -d)',flag="${{ github.sha }}"));
+          r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info='\'$(echo ${{ steps.checker-push.outputs.private_info }} | base64 -d)\'',flag="${{ github.sha }}"));
           open("/out/pull_${{ github.run_id }}","w").write(f"{r.private_info}");
           print(r);
           exit(r.status)'
