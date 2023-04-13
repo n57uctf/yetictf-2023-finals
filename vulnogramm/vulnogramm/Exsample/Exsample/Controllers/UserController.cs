@@ -26,7 +26,8 @@ public class UserController : Controller
         Context context = new Context();
         try
         {
-            if (user.Login.Length != 0 && user.Password.Length != 0)
+            int find = context.User.AsQueryable().Where(t => t.Login == user.Login).ToList().Count;
+            if (user.Login.Length != 0 && user.Password.Length != 0 && find == 0)
             {
                 context.User.Add(new User {Login = user.Login,Password = user.Password});
                 context.SaveChanges();
