@@ -7,6 +7,7 @@ import random
 import typing
 import os
 import base64
+import json
 
 class Status(enum.Enum):
     OK = 101
@@ -180,7 +181,8 @@ def push(args: PushArgs) -> CheckerResult:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         if args.flag not in r3.text:
             return CheckerResult(status=Status.CORRUPT.value, private_info='', public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
-        return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(str([str(r2.cookies['Cookies']), 0]).encode()).decode(), public_info='PUSH works')
+        private_info = json.dumps({'Cookies': str(r2.cookies['Cookies']), 'place': place})
+        return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(private_info.encode()).decode(), public_info='PUSH works')
     else:
         r3 = requests.post(f'http://{args.host}:8000/', cookies={'Cookies': r2.cookies['Cookies']}, data={'isPublic': False, 'groupName': get_random_string(), 'groupDescription': get_random_string()})
         if r3.status_code != 200:
@@ -195,18 +197,19 @@ def push(args: PushArgs) -> CheckerResult:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r5.url} - {r5.status_code}')
         if args.flag not in r5.text:
             return CheckerResult(status=Status.CORRUPT.value, private_info='', public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
-        return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(str([str(r2.cookies['Cookies']), 1, thread_id]).encode()).decode(), public_info='PUSH works')
+        private_info = json.dumps({'Cookies': str(r2.cookies['Cookies']), 'place': place, 'thread_id': thread_id})
+        return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(private_info.encode()).decode(), public_info='PUSH works')
 def pull(args: PullArgs) -> CheckerResult:
-    private_info = base64.b64decode(args.private_info).decode()
-    if private_info[1] == 0:
-        r1 = requests.get(f'http://{args.host}:8000/user', cookies={'Cookies': private_info[0]})
+    private_info = json.loads(base64.b64decode(args.private_info).decode())
+    if private_info['place'] == 0:
+        r1 = requests.get(f'http://{args.host}:8000/user', cookies={'Cookies': private_info['Cookies']})
         if r1.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=private_info, public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
         if args.flag not in r1.text:
             return CheckerResult(status=Status.CORRUPT.value, private_info=private_info, public_info=f'PULL {Status.CORRUPT.value} Can not pull flag')
         return CheckerResult(status=Status.OK.value, private_info=private_info, public_info='PULL works')
     else:
-        r1 = requests.get(f'http://{args.host}:8000/thread/{private_info[2]}', cookies={'Cookies': private_info[0]})
+        r1 = requests.get(f'http://{args.host}:8000/thread/{private_info["thread_id"]}', cookies={'Cookies': private_info['Cookies']})
         if r1.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=private_info, public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
         if args.flag not in r1.text:

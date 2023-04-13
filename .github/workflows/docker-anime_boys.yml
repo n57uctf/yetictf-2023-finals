@@ -136,6 +136,8 @@ jobs:
           cat /tmp/private_${{ github.run_id }}/push_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
+        env: 
+          PUSH_PLACE: ${{ matrix.place }}
 
       - name: Checker pull, place ${{ matrix.place }}
         id: checker-pull
@@ -143,7 +145,7 @@ jobs:
           set +e
           docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
           from checkers.checker import pull,PullArgs;
-          r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info='\''${{ steps.checker-push.outputs.private_info }}'\'',flag="${{ github.sha }}"));
+          r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info="${{ steps.checker-push.outputs.private_info }}",flag="${{ github.sha }}"));
           open("/out/pull_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
           print(r);
           exit(r.status)'
