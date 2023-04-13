@@ -10,10 +10,10 @@ class Products(models.Model):
     name = models.CharField(verbose_name='Name', max_length=255)
     description = models.TextField(verbose_name='Description', null=True, blank=True)
     price = models.PositiveIntegerField(verbose_name='Price', default=3000, validators=[
-                MaxValueValidator(100_000),
+                MaxValueValidator(1_000_000),
                 MinValueValidator(3000)
             ])
-    is_premium = models.BooleanField(verbose_name='IsPremium', default=False)
+    is_premium = models.BooleanField(verbose_name='Is premium', default=False)
     extra_info = models.CharField(verbose_name='Extra info', null=True, blank=True, max_length=100)
 
     def __str__(self):
@@ -26,7 +26,8 @@ class Products(models.Model):
 
 class ProductsReviews(models.Model):
     """
-    This module contains records of products reviews
+    This model contains records of products reviews
+    Client must place an order with the product before leaving review
     """
     product = models.ForeignKey(Products, verbose_name='Product', on_delete=models.PROTECT)
     client = models.ForeignKey(Clients, verbose_name='Client', on_delete=models.PROTECT)

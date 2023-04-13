@@ -12,8 +12,8 @@ from .exceptions import InvalidAccessTokenException
 
 
 JWT_DEFAULT_HEADER = {"alg": "HS256", "typ": "JWT"}
-ACCESS_TOKEN_DEFAULT_LIFETIME_IN_MINUTES = 30
-REFRESH_TOKEN_DEFAULT_LIFETIME_IN_MINUTES = 43800  # 1 month
+ACCESS_TOKEN_DEFAULT_LIFETIME_IN_MINUTES = 5
+REFRESH_TOKEN_DEFAULT_LIFETIME_IN_MINUTES = 30
 
 
 def get_token_expiration_time_in_utc(token_lifetime_in_minutes: int) -> int:

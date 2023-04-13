@@ -1,13 +1,18 @@
 from django.db import models
 from clients.models import Clients
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class PromoCodes(models.Model):
     """
-    This model contains all promocodes
+    This model contains all promo codes
+    Each promo code can be activated by the client only once
     """
     code = models.CharField(verbose_name='Promocode', max_length=255)
-    amount = models.PositiveIntegerField(verbose_name='Amount', default=0)
+    amount = models.PositiveIntegerField(verbose_name='Amount', validators=[
+                MaxValueValidator(3000),
+                MinValueValidator(100)
+            ])
 
     def __str__(self):
         return self.code

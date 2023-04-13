@@ -7,5 +7,5 @@ class PutFlagSerializer(serializers.Serializer):
 
 
 class PullFlagSerializer(serializers.Serializer):
-    private_info = serializers.CharField(allow_blank=True)
+    private_info = serializers.CharField()
     flag = serializers.CharField()

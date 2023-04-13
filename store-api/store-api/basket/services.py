@@ -12,7 +12,7 @@ def get_basket_products(client_id: int) -> List[BasketProducts]:
     :return: list of basket products
     :rtype: List[BasketProducts]
     """
-    return list(BasketProducts.objects.filter(client_id=client_id))
+    return list(BasketProducts.objects.select_related('product').filter(client_id=client_id))
 
 
 def save_basket_product(client_id: int, product_id: int) -> BasketProducts:

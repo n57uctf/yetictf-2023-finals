@@ -4,7 +4,7 @@ from .models import Products, ProductsReviews
 
 @admin.register(Products)
 class ProductsAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'price')
+    list_display = ('name', 'price')
 
     class Meta:
         model = Products
