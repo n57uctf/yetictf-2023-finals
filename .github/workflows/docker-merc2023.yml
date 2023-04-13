@@ -127,7 +127,7 @@ jobs:
         id: checker-push-0
         run: |
           set +e
-          docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+          docker run -e PUSH_PLACE=0 -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
           from checkers.checker import push,PushArgs;
           r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
           open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
@@ -139,8 +139,6 @@ jobs:
           cat /tmp/private_${{ github.run_id }}/push_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
-        env: 
-          PUSH_PLACE: 0
 
       - name: Checker pull, place 0
         id: checker-pull-0
@@ -174,7 +172,7 @@ jobs:
         id: checker-push-1
         run: |
           set +e
-          docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+          docker run -e PUSH_PLACE=1 -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
           from checkers.checker import push,PushArgs;
           r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
           open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
@@ -186,8 +184,6 @@ jobs:
           cat /tmp/private_${{ github.run_id }}/push_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
-        env: 
-          PUSH_PLACE: 1
   
       - name: Checker pull, place 1
         id: checker-pull-1
