@@ -87,11 +87,13 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: docker compose up
-        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
+        run: |
+          bash fixperm.sh
+          docker compose up -d --remove-orphans --quiet-pull --wait --no-build
         env: 
           IMAGE: ${{ steps.meta.outputs.tags }}
-
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
       - name: Get Host IP addr
         id: ip-addr
         run: |
@@ -99,8 +101,6 @@ jobs:
           ipaddr=$(ip -4 addr show $if | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
           echo "ipaddr=$ipaddr" >> $GITHUB_OUTPUT
     
-
-      
       - run: docker compose ps
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
@@ -158,7 +158,11 @@ jobs:
       - name: Show applications folder
         if: ${{ failure() && (steps.checker-pull-0.conclusion == 'failure' || steps.checker-pull-0.conclusion == 'failure')  }}
         run: |
+          echo "--- HOST ---"
+          id 
           ls -alh ./source/applications
+          echo "--- DOCKER ---"
+          docker compose exec webserver id
           docker compose exec webserver ls -alh /var/www/html/applications
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
