@@ -2,6 +2,9 @@ name: Docker merc2023
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
   push:
     branches: [ "main", "service/merc2023" ]
     paths:
@@ -30,7 +33,6 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
@@ -86,10 +88,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: Prepare host
+        run: if [[ -f prepare_host.sh ]]; then bash prepare_host.sh; fi
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
       - name: docker compose up
-        run: |
-          bash host_prepare.sh
-          docker compose up -d --remove-orphans --quiet-pull --wait --no-build
+        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
         env: 
           IMAGE: ${{ steps.meta.outputs.tags }}
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
