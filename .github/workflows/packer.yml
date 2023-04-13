@@ -96,7 +96,12 @@ jobs:
       - run: rm -rf .vagrant
         if: ${{ always() }}
         working-directory: ./.vulnbox/
-  
+      
+      - name: Delete all vulnbox_default VMs
+        run: vboxmanage list vms | grep "vulnbox_default_" | awk -F" " '{print $1}' | xargs -I {} vboxmanage unregistervm --delete {}
+        if: ${{ always() }} 
+        working-directory: ./.vulnbox/
+
   push:
     needs: build
     if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  }}
@@ -113,11 +118,11 @@ jobs:
         run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: ZIP w\ password
-        run: zip -e -P $ZIP_PASSWORD ${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip ${PKR_VAR_event}.ova
+        run: zip -e -P $ZIP_PASSWORD ${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.PKR_VAR_event }}.ova
         working-directory: ./.vulnbox/output-vulnbox/
 
       - name: Put to Yandex Object storage
-        run: aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip
+        run: aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip
         working-directory: ./.vulnbox/output-vulnbox/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
