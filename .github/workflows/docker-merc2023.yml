@@ -70,7 +70,10 @@ jobs:
     permissions:
       contents: read
       packages: read
-    
+    strategy: 
+      matrix:
+        place: [0,1]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -123,11 +126,11 @@ jobs:
         id: checker-image
         working-directory: ${{ env.SERVICE_NAME }}/
       
-      - name: Checker push, place 0
-        id: checker-push-0
+      - name: Checker push, place ${{ matrix.place }}
+        id: checker-push
         run: |
           set +e
-          docker run -e PUSH_PLACE=0 -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+          docker run -e PUSH_PLACE=${{ matrix.place }} -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
           from checkers.checker import push,PushArgs;
           r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
           open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
@@ -140,8 +143,8 @@ jobs:
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
 
-      - name: Checker pull, place 0
-        id: checker-pull-0
+      - name: Checker pull, place ${{ matrix.place }}
+        id: checker-pull
         run: |
           set +e
           docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
@@ -158,7 +161,7 @@ jobs:
           exit 0
 
       - name: (DEBUG) Show applications folder
-        if: ${{ failure() && (steps.checker-push-0.conclusion == 'failure' || steps.checker-pull-0.conclusion == 'failure')  }}
+        if: ${{ failure() }}
         run: |
           echo "--- HOST ---"
           id 
@@ -167,40 +170,6 @@ jobs:
           docker compose exec webserver id
           docker compose exec webserver ls -alh /var/www/html/applications
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
-
-      - name: Checker push, place 1
-        id: checker-push-1
-        run: |
-          set +e
-          docker run -e PUSH_PLACE=1 -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
-          from checkers.checker import push,PushArgs;
-          r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
-          open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
-          print(r);
-          exit(r.status)'
-
-          exitcode=$?
-          echo "exitcode=$exitcode" 
-          cat /tmp/private_${{ github.run_id }}/push_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
-          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
-          exit 0
-  
-      - name: Checker pull, place 1
-        id: checker-pull-1
-        run: |
-          set +e
-          docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
-          from checkers.checker import pull,PullArgs;
-          r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info='\''${{ steps.checker-push-1.outputs.private_info }}'\'',flag="${{ github.sha }}"));
-          open("/out/pull_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
-          print(r);
-          exit(r.status)'
-          
-          exitcode=$?
-          echo "exitcode=$exitcode" 
-          cat /tmp/private_${{ github.run_id }}/pull_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
-          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
-          exit 0
 
       - run: docker compose logs
         if: ${{ failure() }}
