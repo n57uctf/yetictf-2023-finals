@@ -5,7 +5,6 @@ templates = Jinja2Templates(directory="./templates/")
 
 @app.get("/")
 async def get_forum(request : Request, response: Response, Cookies: str | None = Cookie(default=None)):
-    print(Cookies)
     if Cookies is None:
         return templates.TemplateResponse('./page.html', context={'request': request})
     else:
@@ -53,16 +52,16 @@ async def get_forum(request : Request, response: Response, Cookies: str | None =
 @app.post("/")
 async def create_group(request: Request, isPublic:bool = Form(default=False), groupName: str = Form(default=None), groupDescription: str = Form(default=None), Cookies: str | None = Cookie(default=None)):
     try:
-        print("post", Cookies)
+
         verify_auth_token(Cookies)
-        print('post success')
+
     except:
         response = RedirectResponse('/login', status_code=status.HTTP_302_FOUND)
         response.delete_cookie(key='Cookies')
         return response
     usr = db.execute('read_user', {'user': verify_auth_token(Cookies)}).one(User)
     if db.execute('read_group',{'name':groupName}).one(Group) is None:
-        print('ua tut')
+
         db.execute('create_group', {'name': groupName, 'description': groupDescription, 'isPublic' : isPublic, 'creator': usr.user_id}).none()
         db.execute('add_groupuser',{'user_id':usr.user_id,'group_id':db.execute('read_group',{'name':groupName}).one(Group).group_id}).none()
     else:
@@ -82,7 +81,7 @@ async def get_login(request : Request, responce: Response):
     return response
 @app.post("/login")
 async def post_login(request: Request, responce: Response, inputName: str = Form(...), inputPassword: str = Form(...),remember_me: bool = Form(False)):
-    print(inputName, hash_sha256(inputPassword),remember_me, sep="\n")
+
     usr = db.execute('read_user', {'user': inputName}).one(UserLogin)
     if usr == None:
         return RedirectResponse('/register', status_code=status.HTTP_302_FOUND)
@@ -98,7 +97,7 @@ async def get_register(request : Request):
     return templates.TemplateResponse('./register.html', context={'request': request})
 @app.post("/register")
 async def post_register(request: Request, inputName: str = Form(...), inputPassword: str = Form(...), inputConfirmPassword: str = Form(...)):
-    print(inputName,inputPassword,inputConfirmPassword, sep="\n")
+
     usr = db.execute('read_user', {'user': inputName}).one(UserLogin)
     if inputPassword != inputConfirmPassword:
         return templates.TemplateResponse('./register.html', context={'request': request, 'invalpass': "Passwords aren't similar!"})
@@ -118,15 +117,14 @@ async def get_user(request: Request, Cookies: str | None = Cookie(default=None))
         response.delete_cookie(key='Cookies')
         return response
     res = db.execute('read_user_like_desk',{'user':verify_auth_token(Cookies)}).one(User)
-    print(db.execute('read_user_like_desk',{'user':verify_auth_token(Cookies)}).one(User))
     return templates.TemplateResponse('./profile.html', context={'request': request,'byte_arr': base64.b64encode(bytes(res.img)).decode('utf-8'),'user':res, 'username' : res.nickname, 'isVipProfile' : ("обычный аккаунт", "VIP статус")[res.isvip]})
 @app.post("/user")
 async def post_user(request: Request, inputAvatar: UploadFile = File(default=None), inputBio: str = Form(default=None), inputPrivatbio: str = Form(default=None), Cookies: str | None = Cookie(default=None), isVip:str=Form(default=False)):
-    print(f'Bio:{inputBio}\nPassword:{inputPrivatbio}')
+
     try:
-        print(Cookies)
+
         verify_auth_token(Cookies)
-        print('success')
+
     except:
         response = RedirectResponse('/login', status_code=status.HTTP_302_FOUND)
         response.delete_cookie(key='Cookies')
@@ -135,7 +133,6 @@ async def post_user(request: Request, inputAvatar: UploadFile = File(default=Non
     usr = db.execute('read_user', {'user': verify_auth_token(Cookies)}).one(User)
     if inputAvatar is not None:
         if inputAvatar.content_type in allowed_types:
-            print(inputAvatar.content_type)
             img_data = await inputAvatar.read()
 
             usr = db.execute('read_user', {'user': verify_auth_token(Cookies)}).one(User)
@@ -219,7 +216,6 @@ async def create_thread(request: Request, group_id: str = Path(), threadName: st
     else:
         raise HTTPException(status_code=409)
     url = '/group/' + group_id
-    print(url, group_id, sep='\n')
     return RedirectResponse(url, status_code=status.HTTP_302_FOUND)
 
 @app.get("/group")
@@ -247,13 +243,11 @@ async def get_thread(request: Request, thread_id: str = Path(), Cookies: str | N
                 comment.name = comm.nickname
                 comment.img = base64.b64encode(bytes(db.execute('read_user_by_id',{'id': comment.user_id}).one(User).img)).decode('utf-8')
                 comment.isvip = comm.isvip
-        print(comments[-1].time)
         return templates.TemplateResponse('./page_comments.html', context={'request': request,'thread_id':thread_id, 'username' : usr.nickname, 'comments': comments, 'thread': db.execute('read_thread_by_id',{'id': thread_id}).one(Thread)})
     else:
         return templates.TemplateResponse('./page_comments.html', context={'request': request,'thread_id':thread_id, 'username': usr.nickname, 'comments': comments,  'thread': db.execute('read_thread_by_id',{'id': thread_id}).one(Thread)})
 @app.post("/thread/{thread_id}")
 async def post_thread(request: Request, addComment:str=Form(...), thread_id: str = Path(), Cookies: str | None = Cookie(default=None)):
-    print('id_thread',thread_id)
     try:
         verify_auth_token(Cookies)
     except:
@@ -269,8 +263,6 @@ async def post_thread(request: Request, addComment:str=Form(...), thread_id: str
     time_data = f'{str(data)[:19]}'
     db.execute('create_comment',{'user': usr.user_id, 'thread': thread_id, 'text': addComment, 'time':time_data}).none()
     url = '/thread/' + thread_id
-    print(url, thread_id, sep='\n')
-    print(addComment)
     return RedirectResponse(url, status_code=status.HTTP_302_FOUND)
 @app.get("/thread")
 async def redirect_thread(response: Response):
@@ -285,17 +277,11 @@ async def add_user_to_group(request: Request, group_id: str = Path(), Cookies: s
         response.delete_cookie(key='Cookies')
         return response
     usr = db.execute('read_user', {'user': verify_auth_token(Cookies)}).one(User)
-    print(usr)
-    print(db.execute('read_groupuser', {'user_id':usr.user_id}).all(GroupUser))
     if group_id.isdigit() == False or db.execute('read_group_by_id', {'id': group_id}).one(Group) is None:
         raise HTTPException(status_code=404)
     if db.execute('read_groupuser', {'user_id':usr.user_id}).all(GroupUser) is not None:
         if group_id not in [us.group_id for us in db.execute('read_groupuser', {'user_id':usr.user_id}).all(GroupUser)]:
             db.execute('add_groupuser', {'user_id':usr.user_id, 'group_id':group_id}).none()
-            print('added')
-        else:
-            print('already in group')
-        print(group_id)
     else:
         db.execute('add_groupuser', {'user_id':usr.user_id, 'group_id':group_id}).none()
     return RedirectResponse('/', status_code=status.HTTP_302_FOUND)
@@ -311,11 +297,8 @@ async def add_user_to_group(request: Request, group_id: str = Path(), Cookies: s
     usr = db.execute('read_user', {'user': verify_auth_token(Cookies)}).one(User)
     if group_id.isdigit() == False or db.execute('read_group_by_id', {'id': group_id}).one(Group) is None:
         raise HTTPException(status_code=404)
-    if db.execute('read_groupuser', {'user_id':usr.user_id}).all(GroupUser) is None:
-        print('nothing to do')
     else:
         db.execute('delete_groupuser', {'user_id': usr.user_id, 'group_id': group_id}).none()
-    print(group_id)
     return RedirectResponse('/', status_code=status.HTTP_302_FOUND)
 
 @app.post("/reply/{group_id}/{thread_id}")
@@ -340,7 +323,6 @@ async def thread_reply(request: Request, group_id: str = Path(), thread_id: str 
         if comments:
             for comment in comments:
                 db.execute('create_comment',{'user': comment.user_id,'thread':new_thread.thread_id, 'text': comment.text, 'time': comment.time}).none()
-        print(f'{new_thread} \n {comments}')
 
     return RedirectResponse('/', status_code=status.HTTP_302_FOUND)
 
