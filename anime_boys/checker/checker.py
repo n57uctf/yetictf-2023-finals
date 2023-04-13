@@ -197,21 +197,21 @@ def push(args: PushArgs) -> CheckerResult:
             return CheckerResult(status=Status.CORRUPT.value, private_info='', public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
         return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(str([str(r2.cookies['Cookies']), 1, thread_id]).encode()).decode(), public_info='PUSH works')
 def pull(args: PullArgs) -> CheckerResult:
-    args.private_info = base64.b64decode(args.private_info).decode()
-    if args.private_info[1] == 0:
-        r1 = requests.get(f'http://{args.host}:8000/user', cookies={'Cookies': args.private_info[0]})
+    private_info = base64.b64decode(args.private_info).decode()
+    if private_info[1] == 0:
+        r1 = requests.get(f'http://{args.host}:8000/user', cookies={'Cookies': private_info[0]})
         if r1.status_code != 200:
-            return CheckerResult(status=Status.MUMBLE.value, private_info=args.private_info, public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
+            return CheckerResult(status=Status.MUMBLE.value, private_info=private_info, public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
         if args.flag not in r1.text:
-            return CheckerResult(status=Status.CORRUPT.value, private_info=args.private_info, public_info=f'PULL {Status.CORRUPT.value} Can not pull flag')
-        return CheckerResult(status=Status.OK.value, private_info=args.private_info, public_info='PULL works')
+            return CheckerResult(status=Status.CORRUPT.value, private_info=private_info, public_info=f'PULL {Status.CORRUPT.value} Can not pull flag')
+        return CheckerResult(status=Status.OK.value, private_info=private_info, public_info='PULL works')
     else:
-        r1 = requests.get(f'http://{args.host}:8000/thread/{args.private_info[2]}', cookies={'Cookies': args.private_info[0]})
+        r1 = requests.get(f'http://{args.host}:8000/thread/{private_info[2]}', cookies={'Cookies': private_info[0]})
         if r1.status_code != 200:
-            return CheckerResult(status=Status.MUMBLE.value, private_info=args.private_info, public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
+            return CheckerResult(status=Status.MUMBLE.value, private_info=private_info, public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
         if args.flag not in r1.text:
-            return CheckerResult(status=Status.CORRUPT.value, private_info=args.private_info, public_info=f'PULL {Status.CORRUPT.value} Can not pull flag')
-        return CheckerResult(status=Status.OK.value, private_info=args.private_info, public_info='PULL works')
+            return CheckerResult(status=Status.CORRUPT.value, private_info=private_info, public_info=f'PULL {Status.CORRUPT.value} Can not pull flag')
+        return CheckerResult(status=Status.OK.value, private_info=private_info, public_info='PULL works')
 
 if __name__ == '__main__':
     import sys
