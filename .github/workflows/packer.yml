@@ -15,26 +15,7 @@ env:
   PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
 
 jobs:
-  validate:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - run: vagrant validate
-        working-directory: ./.vulnbox/
-
-      - run: packer init . && packer validate .
-        env:
-          PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
-          PKR_VAR_username: "ssh"
-          PKR_VAR_password: "ssh"
-          PKR_VAR_vagrantbox: "vm_name"
-          PKR_VAR_port: "2222"
-        working-directory: ./.vulnbox/
-
   vagrant:
-    needs: validate
     outputs:
       vm_name: ${{ steps.vm-details.outputs.vm_name }}
       ssh_port: ${{ steps.vm-details.outputs.ssh_port }}
@@ -57,6 +38,9 @@ jobs:
           key: ${{ runner.os }}-vagrant-${{ hashFiles('.vulnbox/Vagrantfile') }}
           restore-keys: |
             ${{ runner.os }}-vagrant-
+
+      - run: vagrant validate
+        working-directory: ./.vulnbox/
 
       - name: Check vagrant environment
         run: |
