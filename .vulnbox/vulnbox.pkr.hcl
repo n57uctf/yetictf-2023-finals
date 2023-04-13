@@ -82,6 +82,7 @@ build {
     inline = [
       "cd /vagrant",
       "find /vagrant -name \"docker-compose.yml\" -print0 | xargs -0 -I {} sudo -E -u ${var.username} sh -c 'cp -r $(dirname {}) /home/${var.username}/'",
+      "sudo -E -u ${var.username} find /home/${var.username}/ -name \"host_prepare.sh\" -exec bash {} \\;",
       "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec docker-compose -f {} up --build -d \\;"
     ]
   }
