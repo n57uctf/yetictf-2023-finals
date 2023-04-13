@@ -152,16 +152,14 @@ jobs:
         run: |
           cat << EOF > Dockerfile.${{ env.SERVICE_NAME }}
           FROM ghcr.io/n57uctf/worker:dev
-          COPY checker/* /code/checkers/
+          COPY ${{ env.SERVICE_NAME }}/checker/* /code/checkers/
           RUN ls -al /code/checkers/ && pip install --no-cache-dir --upgrade -r /code/checkers/requirements.txt
           EOF
-        working-directory: ${{ env.SERVICE_NAME }}/
       
       - run: |
           image=$(docker build -q -f Dockerfile.${{ env.SERVICE_NAME }} .)
           echo "image=$image" >> $GITHUB_OUTPUT
         id: checker-image
-        working-directory: ${{ env.SERVICE_NAME }}/
       
       - name: Checker push
         id: checker-push
