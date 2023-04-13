@@ -21,25 +21,14 @@ time.sleep(2)
 
 logging.basicConfig(level=logging.INFO)
 
-local = 0
 
-if not local:
-    db = SQLDB({
-               'host': '217.71.129.139',
-               'port': '5316', # 4834
-               'database': 'postgres',
-               'user': 'postgres',
-               'password': 'qweasdzxc1'
-           })
-else:
-    db = SQLDB({
-                'host': 'db',
-                'port': '5432',
-                'database': 'postgres',
-                'user': 'postgres',
-                'password': 'qweasdzxc1'
-            })
-    # creating bd
+db = SQLDB({
+            'host': 'db',
+            'port': '5432',
+            'database': 'postgres',
+            'user': 'postgres',
+            'password': 'qweasdzxc1'
+        })
 db.execute('create_db').none()
 app = FastAPI(docs_url=None, redoc_url=None)
 from app.routes import *
