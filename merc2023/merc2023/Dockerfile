@@ -20,5 +20,6 @@ RUN useradd -ms /bin/bash merc
 RUN chown -R merc:merc /var/www/html
 RUN chmod -R 777 /var/www/html
 RUN service apache2 restart
+RUN chown -R merc:merc /var/run/apache2 
 
 USER merc
