@@ -1,9 +1,7 @@
-import React, { handleChangeFile, handleFile, useState } from 'react'
+import React from 'react';
 
 
 export default function Home ({setPhoto}){
-
-
 
   function handleFile(e){      
     let content = e.target.result;
@@ -21,7 +19,7 @@ export default function Home ({setPhoto}){
     return (
       <div >
           <form onSubmit={e => this.submit(e)}>  
-            <input type="file" accept="image/png" id="upload" hidden  onChange={e => handleChangeFile(e.target.files[0])}></input>
+            <input type="file" accept="image/png,image/bmp,image/svg" id="upload" hidden  onChange={e => handleChangeFile(e.target.files[0])}></input>
             <label id="upload_label" for="upload" className="button">Choose your photo</label>
           </form> 
       </div>

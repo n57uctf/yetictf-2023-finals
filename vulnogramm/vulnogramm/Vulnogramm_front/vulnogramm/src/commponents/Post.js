@@ -9,11 +9,12 @@ export default function Post({show, close_button_click})
   const [subscript, setSubscript] = useState();
 
  function newPost(credentials) {
-    return fetch('https://localhost:7180/api/Post', {
+    return fetch(`${window.location.origin}/backend/post`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${JSON.parse(localStorage.getItem('jwt'))['access_token']}`
       },
       body: JSON.stringify(credentials)
     })
