@@ -47,10 +47,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Extract build args 
-        id: build-args
-        run: cat ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/.env >> $GITHUB_OUTPUT
-
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v4
