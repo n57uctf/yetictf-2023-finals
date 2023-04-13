@@ -27,6 +27,8 @@ jobs:
       - run: packer init . && packer validate .
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
+          PKR_VAR_username: "ssh"
+          PKR_VAR_password: "ssh"
           PKR_VAR_vagrantbox: "vm_name"
           PKR_VAR_port: "2222"
         working-directory: ./.vulnbox/
