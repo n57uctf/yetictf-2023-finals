@@ -43,7 +43,7 @@ class UpdateAccessTokenAPIView(GenericAPIView):
                     })
                 else:
                     return Response(status=status.HTTP_403_FORBIDDEN)
-            except InvalidAccessTokenException:
+            except InvalidAccessTokenException as e:
                 return Response(status=status.HTTP_403_FORBIDDEN)
         else:
             return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)

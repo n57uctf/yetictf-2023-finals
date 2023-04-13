@@ -12,8 +12,8 @@ from .exceptions import InvalidAccessTokenException
 
 
 JWT_DEFAULT_HEADER = {"alg": "HS256", "typ": "JWT"}
-ACCESS_TOKEN_DEFAULT_LIFETIME_IN_MINUTES = 5
-REFRESH_TOKEN_DEFAULT_LIFETIME_IN_MINUTES = 30
+ACCESS_TOKEN_DEFAULT_LIFETIME_IN_MINUTES = 30
+REFRESH_TOKEN_DEFAULT_LIFETIME_IN_MINUTES = 43800  # 1 month
 
 
 def get_token_expiration_time_in_utc(token_lifetime_in_minutes: int) -> int:
@@ -63,7 +63,7 @@ class JWT:
     def time_to_left(self) -> int:
         expiration_time = self._payload.get('exp')
         current_time = datetime.now(timezone.utc).timestamp()
-        return int(expiration_time - current_time)
+        return expiration_time - current_time
 
     def is_available(self) -> bool:
         """Check is access_token is still available

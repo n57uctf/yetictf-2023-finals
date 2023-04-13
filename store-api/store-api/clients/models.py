@@ -9,8 +9,6 @@ class Clients(models.Model):
     email = models.EmailField(verbose_name='Email', max_length=255, unique=True)
     password = models.CharField(verbose_name='Password', max_length=255)
     balance = models.PositiveIntegerField(verbose_name='Balance', default=0)
-    status = models.CharField(verbose_name='Status', max_length=255, choices=ClientsStatuses.choices(),
-                              default=ClientsStatuses.DEFAULT.value)
 
     def __str__(self):
         return self.email.__str__()
