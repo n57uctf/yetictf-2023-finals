@@ -90,7 +90,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v4
         with:
-          context: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/nginx/
+          context: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/app-front/
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
