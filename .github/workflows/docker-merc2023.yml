@@ -3,7 +3,7 @@ name: Docker merc2023
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "service/merc2023" ]
     paths:
       - 'merc2023/**'
       - '.github/workflows/docker-merc2023.yml'
