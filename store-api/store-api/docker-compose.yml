@@ -1,5 +1,13 @@
 version: "3.1"
 
+x-healthcheck: 
+  &healthcheck
+  test: curl -f http://localhost/
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 10s
+
 services:
 
   db:
@@ -14,9 +22,13 @@ services:
     networks:
       - store
     restart: always
+    healthcheck:
+      << : *healthcheck
+      test: pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-db}
 
   django:
     container_name: django
+    image: ${IMAGE_BACKEND:-ghcr.io/n57uctf/store-api-backend:main}
     build:
       context: .
     ports:
@@ -29,17 +41,19 @@ services:
       - store
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   nginx:
+    image: ${IMAGE_FRONTEND:-ghcr.io/n57uctf/store-api-frontend:main}
     build:
       context: ./nginx/
       dockerfile: Dockerfile
     networks:
       - store
     depends_on:
-      - db
-      - django
+      django:
+        condition: service_started
     ports:
       - "8080:8080"
     volumes:
