@@ -3,7 +3,7 @@ name: Docker vulnogramm
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "serivce/vulnogramm" ]
+    branches: [ "main", "service/vulnogramm" ]
     paths:
       - 'vulnogramm/**'
       - '.github/workflows/docker-vulnogramm.yml'
