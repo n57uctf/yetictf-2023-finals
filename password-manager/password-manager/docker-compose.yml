@@ -18,7 +18,7 @@ x-psqlenv:
 
 services:
   frontend:
-    image: ghcr.io/n57uctf/password-manager-frontend:main
+    image: ${IMAGE_FRONTEND:-ghcr.io/n57uctf/password-manager-frontend:main}
     build: ./app-front/
     volumes:
       - ./app-front:/app-front
@@ -33,7 +33,7 @@ services:
         condition: service_healthy
 
   backend:
-    image: ghcr.io/n57uctf/password-manager-backend:main
+    image: ${IMAGE_BACKEND:-ghcr.io/n57uctf/password-manager-backend:main}
     build: .
     command: uvicorn app:app --host 0.0.0.0 --port 8000
     volumes:

@@ -9,8 +9,10 @@ on:
       - '.github/workflows/packer.yml'
   workflow_call:
   pull_request:
-    branches:
-      - main
+    branches: ["main"]
+    paths:
+      - '.vulnbox/**'
+      - '.github/workflows/packer.yml'
   schedule:
     - cron: '0 */4 * * *'
 
@@ -102,7 +104,7 @@ jobs:
   
   push:
     needs: build
-    if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event.action == 'schedule' || github.event_name == 'workflow_dispatch'  }}
+    if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  }}
     name: Push VM to s3
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     env:
