@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=Vulnogramm
+    expose:
+      - 5432
+    volumes:
+      - ./init-databases-tables.sh:/docker-entrypoint-initdb.d/init-databases-tables.sh
+  backend:
+    image:  ${IMAGE_BACKEND:-ghcr.io/n57uctf/vulnogramm-backend:main}
+    build: ./Exsample/Exsample/.
+    restart: always
+    volumes:
+      - .:/code
+    expose:
+      - 7180
+    depends_on:
+      - db
+  frontend:
+    image:  ${IMAGE_FRONTEND:-ghcr.io/n57uctf/vulnogramm-frontend:main}
+    build: ./Vulnogramm_front/vulnogramm/.
+    volumes:
+      - .:/frontend
+    ports:
+      - 3000:3000

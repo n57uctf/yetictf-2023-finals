@@ -2,8 +2,11 @@ name: Docker merc2023
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
   push:
-    branches: [ "main" ]
+    branches: [ "main", "service/merc2023" ]
     paths:
       - 'merc2023/**'
       - '.github/workflows/docker-merc2023.yml'
@@ -30,7 +33,6 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
@@ -73,12 +75,27 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Prepare host
+        run: if [[ -f host_prepare.sh ]]; then bash host_prepare.sh; fi
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
+      - name: docker compose up
+        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
+        env: 
+          IMAGE: ${{ steps.meta.outputs.tags }}
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
       - name: Get Host IP addr
         id: ip-addr
@@ -87,10 +104,6 @@ jobs:
           ipaddr=$(ip -4 addr show $if | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
           echo "ipaddr=$ipaddr" >> $GITHUB_OUTPUT
     
-      - name: docker compose up
-        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
-        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
-      
       - run: docker compose ps
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
@@ -113,7 +126,7 @@ jobs:
         id: checker-push-0
         run: |
           set +e
-          docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+          docker run -e PUSH_PLACE=0 -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
           from checkers.checker import push,PushArgs;
           r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
           open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
@@ -125,10 +138,9 @@ jobs:
           cat /tmp/private_${{ github.run_id }}/push_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
-        env: 
-          PUSH_PLACE: 0
 
-      - name: Checker pull, place 0 
+      - name: Checker pull, place 0
+        id: checker-pull-0
         run: |
           set +e
           docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
@@ -144,11 +156,22 @@ jobs:
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
 
+      - name: (DEBUG) Show applications folder
+        if: ${{ failure() && (steps.checker-push-0.conclusion == 'failure' || steps.checker-pull-0.conclusion == 'failure')  }}
+        run: |
+          echo "--- HOST ---"
+          id 
+          ls -alh ./source/applications
+          echo "--- DOCKER ---"
+          docker compose exec webserver id
+          docker compose exec webserver ls -alh /var/www/html/applications
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
       - name: Checker push, place 1
         id: checker-push-1
         run: |
           set +e
-          docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+          docker run -e PUSH_PLACE=1 -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
           from checkers.checker import push,PushArgs;
           r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
           open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
@@ -160,10 +183,9 @@ jobs:
           cat /tmp/private_${{ github.run_id }}/push_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
-        env: 
-          PUSH_PLACE: 1
   
       - name: Checker pull, place 1
+        id: checker-pull-1
         run: |
           set +e
           docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
@@ -178,6 +200,14 @@ jobs:
           cat /tmp/private_${{ github.run_id }}/pull_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
+
+      - run: docker compose logs webserver
+        if: ${{ failure() }}
+        working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
+      - run: docker compose logs postgres
+        if: ${{ failure() }}
+        working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
       - run: docker rmi -f ${{ steps.checker-image.outputs.image }}
         if: ${{ always() }}
