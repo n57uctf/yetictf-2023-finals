@@ -71,16 +71,16 @@ jobs:
         run: vboxmanage showvminfo ${{ steps.vm-details.outputs.vm_name }}
 
       - run: vagrant halt -f && vagrant destroy -f
-        if: ${{ always() }}
+        if: ${{ failure() }}
         working-directory: ./.vulnbox/
 
       - run: rm -rf .vagrant
-        if: ${{ always() }}
+        if: ${{ failure() }}
         working-directory: ./.vulnbox/
       
       - name: Delete all vulnbox_default VMs
         run: vboxmanage list vms | grep "vulnbox_default_" | awk -F" " '{print $1}' | xargs -I {} vboxmanage unregistervm --delete {}
-        if: ${{ always() }} 
+        if: ${{ failure() }} 
         working-directory: ./.vulnbox/
 
 
