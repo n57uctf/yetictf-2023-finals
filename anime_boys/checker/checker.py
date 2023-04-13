@@ -6,6 +6,7 @@ import enum
 import random
 import typing
 import os
+import base64
 
 class Status(enum.Enum):
     OK = 101
@@ -165,36 +166,38 @@ def push(args: PushArgs) -> CheckerResult:
     r2 = requests.post(f'http://{args.host}:8000/login', data={'inputName': login, 'inputPassword': passwordik},
                        allow_redirects=False)
     if r2.status_code != 302:
-        return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r2.url} - {r2.status_code}')
+        return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r2.url} - {r2.status_code}')
     # ADD ENVIRON FOR ACTION
     place = 0
     if "PUSH_PLACE" in os.environ:
         place = int(os.environ.get("PUSH_PLACE"))
     else:
         place = random.randint(0, 8679) % 2
+    
     if place == 0:
         r3 = requests.post(f'http://{args.host}:8000/user', cookies={'Cookies': r2.cookies['Cookies']}, data={'inputPrivatbio': args.flag})
         if r3.status_code != 200:
-            return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
+            return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         if args.flag not in r3.text:
-            return CheckerResult(status=Status.CORRUPT.value, private_info=[], public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
-        return CheckerResult(status=Status.OK.value, private_info=[str(r2.cookies['Cookies']), 0], public_info='PUSH works')
+            return CheckerResult(status=Status.CORRUPT.value, private_info='', public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
+        return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(str([str(r2.cookies['Cookies']), 0]).encode()).decode(), public_info='PUSH works')
     else:
         r3 = requests.post(f'http://{args.host}:8000/', cookies={'Cookies': r2.cookies['Cookies']}, data={'isPublic': False, 'groupName': get_random_string(), 'groupDescription': get_random_string()})
         if r3.status_code != 200:
-            return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
+            return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         group_id = re.findall(r'/group/quit/[0-9]+', r3.text)[0][12:]
         r4 = requests.post(f'http://{args.host}:8000/group/{group_id}', cookies={'Cookies': r2.cookies['Cookies']}, data={'threadName': get_random_string(), 'threadDescription': get_random_string()})
         if r4.status_code != 200:
-            return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r4.url} - {r4.status_code}')
+            return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r4.url} - {r4.status_code}')
         thread_id = re.findall(r'/thread/[0-9]+',r4.text)[0][8:]
         r5 = requests.post(f'http://{args.host}:8000/thread/{thread_id}', cookies={'Cookies': r2.cookies['Cookies']}, data={'addComment': args.flag})
         if r5.status_code != 200:
-            return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r5.url} - {r5.status_code}')
+            return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r5.url} - {r5.status_code}')
         if args.flag not in r5.text:
-            return CheckerResult(status=Status.CORRUPT.value, private_info=[], public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
-        return CheckerResult(status=Status.OK.value, private_info=[str(r2.cookies['Cookies']), 1, thread_id], public_info='PUSH works')
+            return CheckerResult(status=Status.CORRUPT.value, private_info='', public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
+        return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(str([str(r2.cookies['Cookies']), 1, thread_id]).encode()).decode(), public_info='PUSH works')
 def pull(args: PullArgs) -> CheckerResult:
+    args.private_info = base64.b64decode(args.private_info).decode()
     if args.private_info[1] == 0:
         r1 = requests.get(f'http://{args.host}:8000/user', cookies={'Cookies': args.private_info[0]})
         if r1.status_code != 200:
@@ -226,13 +229,13 @@ if __name__ == '__main__':
             pull_args = PullArgs(host=host,private_info=private_info, flag=flag)
             result = pull(pull_args)
         else:
-            result = CheckerResult(status=Status.ERROR.value, private_info=[], public_info='No action found in args')
+            result = CheckerResult(status=Status.ERROR.value, private_info='', public_info='No action found in args')
     except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
-        result = CheckerResult(status=Status.DOWN.value, private_info=[], public_info='Service is DOWN')
+        result = CheckerResult(status=Status.DOWN.value, private_info='', public_info='Service is DOWN')
     except SystemError as e:
         raise
     except Exception as e:
-        result = CheckerResult(status=Status.ERROR.value, private_info=[], public_info=str(e))
+        result = CheckerResult(status=Status.ERROR.value, private_info='', public_info=str(e))
     if result.status != Status.OK.value:
         print(result.public_info, file = sys.stderr)
     print(result.private_info)
