@@ -22,7 +22,7 @@ jobs:
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     env:
       PKR_VAR_username: yeti
-      PKR_VAR_password: Password123 # TODO: Fix hardcode password pls
+      PKR_VAR_password: YetiCTF2023 # TODO: Fix hardcode password pls
     name: Build VM
     steps:
       - name: Check build environment
@@ -105,7 +105,7 @@ jobs:
     name: Push VM to s3
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     env:
-      ZIP_PASSWORD: Password123  # TODO: Fix hardcode password pls
+      ZIP_PASSWORD: YetiNETI2023  # TODO: Fix hardcode password pls
     steps:
       - name: Check aws cli
         run: aws s3 help >/dev/null 
