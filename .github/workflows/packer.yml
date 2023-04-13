@@ -20,7 +20,6 @@ jobs:
       vm_name: ${{ steps.vm-details.outputs.vm_name }}
       ssh_port: ${{ steps.vm-details.outputs.ssh_port }}
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
-    name: Build VM
     steps:
       - name: Check build environment
         run: |
@@ -45,7 +44,7 @@ jobs:
       - name: Check vagrant environment
         run: |
           vagrant version
-          vagrant global-status
+          vagrant global-status --prune
 
       - run: vagrant up --no-provision
         working-directory: ./.vulnbox/
