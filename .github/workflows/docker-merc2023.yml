@@ -155,6 +155,13 @@ jobs:
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
 
+      - name: Show applications folder
+        if: ${{ failure() && (steps.checker-pull-0.conclusion == 'failure' || steps.checker-pull-0.conclusion == 'failure')  }}
+        run: |
+          ls -alh ./source/applications
+          docker compose exec webserver ls -alh /var/www/html/applications
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
       - name: Checker push, place 1
         id: checker-push-1
         run: |
