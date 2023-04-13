@@ -10,7 +10,7 @@ on:
   push:
     branches: [ "main", "service/anime_boys", "cicd" ]
     paths:
-      - 'jora/**'
+      - 'anime_boys/**'
       - '.github/workflows/docker-anime_boys.yml'
 
 env:
@@ -153,17 +153,6 @@ jobs:
           cat /tmp/private_${{ github.run_id }}/pull_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
-
-      - name: (DEBUG) Show applications folder
-        if: ${{ failure() }}
-        run: |
-          echo "--- HOST ---"
-          id 
-          ls -alh ./source/applications
-          echo "--- DOCKER ---"
-          docker compose exec webserver id
-          docker compose exec webserver ls -alh /var/www/html/applications
-        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
       - run: docker compose logs
         if: ${{ failure() }}
