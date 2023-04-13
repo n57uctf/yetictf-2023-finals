@@ -175,17 +175,16 @@ class ExportStorage:
             raise HTTPException(500)
 
     def key_gen(self, key):
-        new_key = ''
+        new_key = b''
         for i in range(8):
             for j in range(4):
-                new_key += key[i * 4 + 3 - j]
-        print(new_key)
+                new_key += bytes([key[i * 4 + 3 - j]])
         return new_key
 
     def encrypt(self, text, key):
-        new_text = ''
+        new_text = b''
         key = self.key_gen(key)
         for i in range(len(text)):
-            new_text += chr(ord(text[i]) ^ ord(key[i % 32]))
+            new_text += bytes([text[i] ^ key[i % len(key)]])
         return new_text
 
