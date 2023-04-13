@@ -130,6 +130,19 @@ jobs:
       - name: Prepare host
         run: if [[ -f host_prepare.sh ]]; then bash host_prepare.sh; fi
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+        
+      - name: Setting up checker Dockerfile
+        run: |
+          cat << EOF > Dockerfile.${{ env.SERVICE_NAME }}
+          FROM ghcr.io/n57uctf/worker:dev
+          COPY ${{ env.SERVICE_NAME }}/checker/* /code/checkers/
+          RUN ls -al /code/checkers/ && pip install --no-cache-dir --upgrade -r /code/checkers/requirements.txt
+          EOF
+      
+      - run: |
+          image=$(docker build -q -f Dockerfile.${{ env.SERVICE_NAME }} .)
+          echo "image=$image" >> $GITHUB_OUTPUT
+        id: checker-image
 
       - name: docker compose up
         run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
@@ -147,19 +160,6 @@ jobs:
     
       - run: docker compose ps
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
-
-      - name: Setting up checker Dockerfile
-        run: |
-          cat << EOF > Dockerfile.${{ env.SERVICE_NAME }}
-          FROM ghcr.io/n57uctf/worker:dev
-          COPY ${{ env.SERVICE_NAME }}/checker/* /code/checkers/
-          RUN ls -al /code/checkers/ && pip install --no-cache-dir --upgrade -r /code/checkers/requirements.txt
-          EOF
-      
-      - run: |
-          image=$(docker build -q -f Dockerfile.${{ env.SERVICE_NAME }} .)
-          echo "image=$image" >> $GITHUB_OUTPUT
-        id: checker-image
       
       - name: Checker push
         id: checker-push
