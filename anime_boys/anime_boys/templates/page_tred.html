@@ -1,0 +1,135 @@
+<html>
+
+<head>
+    <title>Anime Boys Forum</title>
+    <!-- Link to Bootstrap CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+         <script src="https://getbootstrap.com/docs/5.0/dist/js/bootstrap.bundle.min.js"></script>
+      <link href="https://getbootstrap.com/docs/5.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script>
+         //spisok = fetch('https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Novosibirsk');
+
+    </script>
+    <style>
+        .vertical-center {
+           margin: 10px;
+        }
+        .center-v {
+          display: flex;
+          align-items: center;
+        }
+        .btn {
+            padding: .375rem -75rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header with logo and title -->
+        <div class="row vertical-center ">
+            <div class="col-10">
+                <h1><a href="https://shikimori.one/animes/z31240-re-zero-kara-hajimeru-isekai-seikatsu"><img src="https://i.pinimg.com/736x/6a/d3/84/6ad38464949bf98045ece55af6cd146f.jpg"  alt="Anime Boys Forum Logo" width="132" height="174" class="img-fluid"></a>
+                Anime Boys Forum
+                </h1>
+            </div>
+
+
+            <div class="col-2 text-center">
+                <a href="/user">{{username}}</a>
+                <a class="btn btn-danger mr-n2 vertical-center" href="/logout">Выход</a>
+            </div>
+        </div>
+
+        <!-- Navigation bar with links to categories -->
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav mr-auto">
+                            <li class="nav-item">
+                                  <button class="btn vertical-center" style="background-color: #964B00; color: white;" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThreadAdd" aria-expanded="false" aria-controls="collapseExample">
+                                    Добавить тред
+                                  </button>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn vertical-center" style="background-color: #964B00; color: white;" href="/">На главную</a>
+                            </li>
+                            <!-- Add more categories as needed -->
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row mt-4" >
+            <div class="col-md-12" style="margin: auto;">
+
+                <!--создание треда-->
+                <div class="collapse card shadow-sm p-3 mb-4" id="collapseThreadAdd" style="border-color: #964B00;">
+                     <form action="/group/{{group_id}}" method="post" id="create-thread">
+                         <div class="mb-3">
+                           <label for="thread-name" class="form-label">Имя треда</label>
+                           <input type="text" class="form-control" id="thread-name" name="threadName" required maxlength="60">
+                        </div>
+                        <div class="mb-3">
+                           <label class="form-label" for="thread-description">О чём пойдет речь?</label>
+                           <textarea class="form-control" id="thread-description" name="threadDescription" maxlength="80" required rows="2"></textarea>
+                        </div>
+                         <div class="d-grid gap-2">
+                            <button type="submit" class="btn" style="background-color: #964B00; color: white;">Создать тред</button>
+                        </div>
+                     </form>
+                  </div>
+
+
+                {% if threads %}
+                    {% for thread in threads %}
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <a class="text-dark" href="/thread/{{thread.thread_id}}">{{thread.name}}</a>  <small class="text-muted" style="font-size: smaller;">
+                                    <span class="badge badge-pill badge-info ml-2">New</span></small>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{thread.description}}</p>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted d-flex w-100 justify-content-between fst-italic"><p>Сообщений: {% if thread.number_of_comments != 0 %} {{thread.number_of_comments}} {% else %} Сообщений еще нет! {% endif %}{% if thread.last_comment_username %} | Последний комментарий от пользователя: <a href="/user/{{thread.last_comment_userid}}">{{thread.last_comment_username}}</a></p> {% endif %}
+                                <!--<a class="btn btn-sm btn-outline-primary float-right" href="/thread/{{thread.thread_id}}">Reply</a>-->
+                                <div class="dropdown">
+                                      <button class="btn dropdown-toggle" style="background-color: #964B00; color: white;" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Репостнуть в группу
+                                      </button>
+                                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                              <form>
+                                                 {% if grofusr %}
+                                                    {% for gr in grofusr %}
+                                                        <li><button class="dropdown-item" formaction="/reply/{{gr.group_id}}/{{thread.thread_id}}" formmethod="post">{{gr.group_name}}</button></li>
+                                                    {% endfor %}
+                                                  {% endif %}
+                                               </form>
+                                          </ul>
+                                    </div>
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <h1>Будьте первым, кто создаст тред в этой группе!</h1>
+                {% endif %}
+
+
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

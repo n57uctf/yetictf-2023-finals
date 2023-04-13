@@ -1,0 +1,1 @@
+INSERT INTO comment (user_, thread_, text, _time) VALUES(%(user)s, %(thread)s, %(text)s, %(time)s)
