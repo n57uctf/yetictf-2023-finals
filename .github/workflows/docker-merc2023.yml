@@ -89,7 +89,7 @@ jobs:
       - name: docker compose up
         run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
         env: 
-          TAG: ${{ steps.meta.outputs.tags }}
+          IMAGE: ${{ steps.meta.outputs.tags }}
 
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
       - name: Get Host IP addr

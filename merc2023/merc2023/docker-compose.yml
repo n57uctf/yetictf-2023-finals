@@ -7,7 +7,7 @@ networks:
 
 services:
   webserver:
-    image: ghcr.io/n57uctf/merc2023:${TAG:-main}
+    image: ${IMAGE:-ghcr.io/n57uctf/merc2023:main}
     build:
       context: .
       dockerfile: Dockerfile
