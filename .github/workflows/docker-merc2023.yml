@@ -3,12 +3,14 @@ name: Docker merc2023
 on:
   workflow_dispatch:
   pull_request:
-    branches:
-      - main
-  push:
-    branches: [ "main", "service/merc2023" ]
+    branches: ["main"]
     paths:
-      - 'merc2023/**'
+    - 'merc2023/**'
+    - '.github/workflows/docker-merc2023.yml'
+  push:
+    branches: [ "main", "service/merc2023", "cicd" ]
+    paths:
+      - 'jora/**'
       - '.github/workflows/docker-merc2023.yml'
 
 env:
@@ -53,7 +55,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v4
         with:
-          context: ./merc2023/merc2023/
+          context: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -61,7 +63,6 @@ jobs:
           push: true
           build-args: | 
             "DB_PASSWORD=${{ steps.build-args.outputs.DB_PASSWORD }}"
-            "APACHE_RUN_USER=${{ steps.build-args.outputs.APACHE_RUN_USER }}"
 
   checker:
     needs: build
@@ -201,11 +202,7 @@ jobs:
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
 
-      - run: docker compose logs webserver
-        if: ${{ failure() }}
-        working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
-
-      - run: docker compose logs postgres
+      - run: docker compose logs
         if: ${{ failure() }}
         working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
