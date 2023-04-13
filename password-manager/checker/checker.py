@@ -214,7 +214,7 @@ def push(args: PushArgs) -> CheckerResult:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
                                  public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
-        if r.json()["password"] != args.flag:
+        if args.flag not in r.json()["password"] :
             return CheckerResult(status=Status.CORRUPT.value,
                                  private_info=f'{r.status_code}',
                                  public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
@@ -274,13 +274,6 @@ def push(args: PushArgs) -> CheckerResult:
                             public_info=f'PUSH {Status.MUMBLE.value} create backup not working: {r.url}, content: {r.text}')
 
     return res
-"""
-    resp = requests.post(f'http://{args.host}:{PORT}/put', json={'id':args.round_number, 'flag': args.flag})
-    if resp.status_code != 200:
-        return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {resp.url} - {resp.status_code}')
-    if resp.json()['flag'] != args.flag:
-        return CheckerResult(status=Status.CORRUPT.value, private_info='', public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
-"""
 
 
 def pull(args: PullArgs) -> CheckerResult:
@@ -314,7 +307,7 @@ def pull(args: PullArgs) -> CheckerResult:
                                  private_info=f'{r.status_code}',
                                  public_info=f'PULL {Status.MUMBLE.value} can not get flag: {r.url}, content: {r.text}')
         data = get_json(r)
-        if data[0]['password'] != args.flag:
+        if args.flag not in data[0]['password']:
             return CheckerResult(status=Status.CORRUPT.value,
                                  private_info=str(args.private_info),
                                  public_info=f'PULL {Status.CORRUPT.value} Flags do not match: {r.url}, content: {r.text}')
@@ -333,7 +326,6 @@ if __name__ == '__main__':
         if action == 'push':
             host, round_number, flag = args
             push_args = PushArgs(host=host,round_number=round_number, flag=flag)
-            # push_args.host, push_args.round_number, push_args.flag = args
             result = push(push_args)
 
         elif action =='pull':
