@@ -9,8 +9,10 @@ on:
       - '.github/workflows/packer.yml'
   workflow_call:
   pull_request:
-    branches:
-      - main
+    branches: ["main"]
+    paths:
+      - '.vulnbox/**'
+      - '.github/workflows/packer.yml'
   schedule:
     - cron: '0 */4 * * *'
 
