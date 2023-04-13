@@ -5,6 +5,7 @@ import requests
 import enum
 import random
 import typing
+import os
 
 class Status(enum.Enum):
     OK = 101
@@ -165,7 +166,13 @@ def push(args: PushArgs) -> CheckerResult:
                        allow_redirects=False)
     if r2.status_code != 302:
         return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r2.url} - {r2.status_code}')
-    if random.randint(0, 8679) % 2 == 0:
+    # ADD ENVIRON FOR ACTION
+    place = 0
+    if "PUSH_PLACE" in os.environ:
+        place = int(os.environ.get("PUSH_PLACE"))
+    else:
+        place = random.randint(0, 8679) % 2
+    if place == 0:
         r3 = requests.post(f'http://{args.host}/user', cookies={'Cookies': r2.cookies['Cookies']}, data={'inputPrivatbio': args.flag})
         if r3.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')

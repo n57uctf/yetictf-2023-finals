@@ -1,0 +1,182 @@
+name: Docker anime_boys
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+    - 'anime_boys/**'
+    - '.github/workflows/docker-anime_boys.yml'
+  push:
+    branches: [ "main", "service/anime_boys", "cicd" ]
+    paths:
+      - 'jora/**'
+      - '.github/workflows/docker-anime_boys.yml'
+
+env:
+  REGISTRY: ghcr.io
+  SERVICE_NAME: anime_boys
+  IMAGE_NAME: ${{ github.repository_owner }}/anime_boys
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+  
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Extract build args 
+        id: build-args
+        run: cat ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/.env >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: true
+
+  checker:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    strategy: 
+      matrix:
+        place: [0,1]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Prepare host
+        run: if [[ -f host_prepare.sh ]]; then bash host_prepare.sh; fi
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
+      - name: docker compose up
+        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
+        env: 
+          IMAGE: ${{ steps.meta.outputs.tags }}
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
+      - name: Get Host IP addr
+        id: ip-addr
+        run: |
+          if=$(ip r | grep default | awk -F' ' '{print $5}')
+          ipaddr=$(ip -4 addr show $if | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+          echo "ipaddr=$ipaddr" >> $GITHUB_OUTPUT
+    
+      - run: docker compose ps
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
+      - name: Setting up checker Dockerfile
+        run: |
+          cat << EOF > Dockerfile.${{ env.SERVICE_NAME }}
+          FROM ghcr.io/n57uctf/worker:dev
+          COPY checker/* /code/checkers/
+          RUN ls -al /code/checkers/ && pip install --no-cache-dir --upgrade -r /code/checkers/requirements.txt
+          EOF
+        working-directory: ${{ env.SERVICE_NAME }}/
+      
+      - run: |
+          image=$(docker build -q -f Dockerfile.${{ env.SERVICE_NAME }} .)
+          echo "image=$image" >> $GITHUB_OUTPUT
+        id: checker-image
+        working-directory: ${{ env.SERVICE_NAME }}/
+      
+      - name: Checker push, place ${{ matrix.place }}
+        id: checker-push
+        run: |
+          set +e
+          docker run -e PUSH_PLACE=${{ matrix.place }} -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+          from checkers.checker import push,PushArgs;
+          r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
+          open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
+          print(r);
+          exit(r.status)'
+
+          exitcode=$?
+          echo "exitcode=$exitcode" 
+          cat /tmp/private_${{ github.run_id }}/push_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
+          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+          exit 0
+
+      - name: Checker pull, place ${{ matrix.place }}
+        id: checker-pull
+        run: |
+          set +e
+          docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+          from checkers.checker import pull,PullArgs;
+          r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info='\''${{ steps.checker-push.outputs.private_info }}'\'',flag="${{ github.sha }}"));
+          open("/out/pull_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
+          print(r);
+          exit(r.status)'
+          
+          exitcode=$?
+          echo "exitcode=$exitcode" 
+          cat /tmp/private_${{ github.run_id }}/pull_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
+          if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+          exit 0
+
+      - name: (DEBUG) Show applications folder
+        if: ${{ failure() }}
+        run: |
+          echo "--- HOST ---"
+          id 
+          ls -alh ./source/applications
+          echo "--- DOCKER ---"
+          docker compose exec webserver id
+          docker compose exec webserver ls -alh /var/www/html/applications
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
+      - run: docker compose logs
+        if: ${{ failure() }}
+        working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
+      - run: docker rmi -f ${{ steps.checker-image.outputs.image }}
+        if: ${{ always() }}
+
+      - name: docker compose down
+        run: docker compose down --remove-orphans --rmi all --volumes
+        if: ${{ always() }}
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
