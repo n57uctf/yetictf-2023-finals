@@ -159,10 +159,10 @@ def get_random_name():
 def push(args: PushArgs) -> CheckerResult:
     login = get_random_name()
     passwordik = get_random_password(16)
-    r1 = requests.post(f'http://{args.host}/register',
+    r1 = requests.post(f'http://{args.host}:8000/register',
                        data={'inputName': login, 'inputPassword': passwordik, 'inputConfirmPassword': passwordik},
                        allow_redirects=False)
-    r2 = requests.post(f'http://{args.host}/login', data={'inputName': login, 'inputPassword': passwordik},
+    r2 = requests.post(f'http://{args.host}:8000/login', data={'inputName': login, 'inputPassword': passwordik},
                        allow_redirects=False)
     if r2.status_code != 302:
         return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r2.url} - {r2.status_code}')
@@ -173,22 +173,22 @@ def push(args: PushArgs) -> CheckerResult:
     else:
         place = random.randint(0, 8679) % 2
     if place == 0:
-        r3 = requests.post(f'http://{args.host}/user', cookies={'Cookies': r2.cookies['Cookies']}, data={'inputPrivatbio': args.flag})
+        r3 = requests.post(f'http://{args.host}:8000/user', cookies={'Cookies': r2.cookies['Cookies']}, data={'inputPrivatbio': args.flag})
         if r3.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         if args.flag not in r3.text:
             return CheckerResult(status=Status.CORRUPT.value, private_info=[], public_info=f'PUSH {Status.CORRUPT.value} Can not store flag')
         return CheckerResult(status=Status.OK.value, private_info=[str(r2.cookies['Cookies']), 0], public_info='PUSH works')
     else:
-        r3 = requests.post(f'http://{args.host}/', cookies={'Cookies': r2.cookies['Cookies']}, data={'isPublic': False, 'groupName': get_random_string(), 'groupDescription': get_random_string()})
+        r3 = requests.post(f'http://{args.host}:8000/', cookies={'Cookies': r2.cookies['Cookies']}, data={'isPublic': False, 'groupName': get_random_string(), 'groupDescription': get_random_string()})
         if r3.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         group_id = re.findall(r'/group/quit/[0-9]+', r3.text)[0][12:]
-        r4 = requests.post(f'http://{args.host}/group/{group_id}', cookies={'Cookies': r2.cookies['Cookies']}, data={'threadName': get_random_string(), 'threadDescription': get_random_string()})
+        r4 = requests.post(f'http://{args.host}:8000/group/{group_id}', cookies={'Cookies': r2.cookies['Cookies']}, data={'threadName': get_random_string(), 'threadDescription': get_random_string()})
         if r4.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r4.url} - {r4.status_code}')
         thread_id = re.findall(r'/thread/[0-9]+',r4.text)[0][8:]
-        r5 = requests.post(f'http://{args.host}/thread/{thread_id}', cookies={'Cookies': r2.cookies['Cookies']}, data={'addComment': args.flag})
+        r5 = requests.post(f'http://{args.host}:8000/thread/{thread_id}', cookies={'Cookies': r2.cookies['Cookies']}, data={'addComment': args.flag})
         if r5.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=[], public_info=f'PUSH {Status.MUMBLE.value} {r5.url} - {r5.status_code}')
         if args.flag not in r5.text:
@@ -196,14 +196,14 @@ def push(args: PushArgs) -> CheckerResult:
         return CheckerResult(status=Status.OK.value, private_info=[str(r2.cookies['Cookies']), 1, thread_id], public_info='PUSH works')
 def pull(args: PullArgs) -> CheckerResult:
     if args.private_info[1] == 0:
-        r1 = requests.get(f'http://{args.host}/user', cookies={'Cookies': args.private_info[0]})
+        r1 = requests.get(f'http://{args.host}:8000/user', cookies={'Cookies': args.private_info[0]})
         if r1.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=args.private_info, public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
         if args.flag not in r1.text:
             return CheckerResult(status=Status.CORRUPT.value, private_info=args.private_info, public_info=f'PULL {Status.CORRUPT.value} Can not pull flag')
         return CheckerResult(status=Status.OK.value, private_info=args.private_info, public_info='PULL works')
     else:
-        r1 = requests.get(f'http://{args.host}/thread/{args.private_info[2]}', cookies={'Cookies': args.private_info[0]})
+        r1 = requests.get(f'http://{args.host}:8000/thread/{args.private_info[2]}', cookies={'Cookies': args.private_info[0]})
         if r1.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=args.private_info, public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
         if args.flag not in r1.text:
