@@ -18,7 +18,7 @@ x-psqlenv:
 
 services:
   frontend:
-    image: ${IMAGE_FRONTEND:ghcr.io/n57uctf/password-manager-frontend:main}
+    image: ${IMAGE_FRONTEND:-ghcr.io/n57uctf/password-manager-frontend:main}
     build: ./app-front/
     volumes:
       - ./app-front:/app-front
