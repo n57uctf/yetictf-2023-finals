@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>409 Already existed</title>
+  <style>
+@import url('https://fonts.googleapis.com/css?family=Bai+Jamjuree|Shadows+Into+Light');
+html, body {
+  padding: 0px;
+  margin: 0px;
+  background: #424242;
+}
+
+.window {
+  background-color: #A3FFFA;
+  box-shadow: inset -1px 1px 2px black;
+  position: relative;
+  width: 100%;
+  height: 445px;
+  margin: auto;
+  border-top: 20px solid #CECCCC;
+  border-bottom: 20px solid #CECCCC;
+  animation-name: lightsOff;
+  animation-duration: 0.2s;
+  animation-delay: 0.5s;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+.wall {
+  width: 100%;
+  height: 600px;
+  padding-top: 50px;
+  background-color: #EEEBEB;
+  background-image: linear-gradient(335deg, #8E1F1F 23px, transparent 23px), linear-gradient(155deg, #8E1F1F 23px, transparent 23px), linear-gradient(335deg, #8E1F1F 23px, transparent 23px), linear-gradient(155deg, #8E1F1F 23px, transparent 23px);
+  background-size: 58px 58px;
+  background-position: 0px 2px, 4px 35px, 29px 31px, 34px 6px;
+  border-bottom: 20px solid #CECCCC;
+  box-shadow: 0px 1px 4px black;
+}
+
+.door {
+  position: relative;
+  top: -465px;
+  height: 100%;
+  margin-left: 35%;
+  width: 30vw;
+  max-width: 360px;
+  min-width: 300px;
+  background-color: #5E3B27;
+  border-left: 20px solid #eeebeb;
+  border-right: 20px solid #eeebeb;
+  box-shadow: inset -2px 2px 2px black;
+}
+
+.address {
+  text-align: center;
+  padding-top: 10px;
+  font-size: 4em;
+  font-family: "Bai Jamjuree", sans-serif;
+  text-shadow: 2px -2px black;
+  color: silver;
+}
+
+.door-window {
+  position: relative;
+  width: 20vw;
+  max-width: 280px;
+  min-width: 220px;
+  height: 460px;
+  top: 10px;
+  margin: auto;
+  background-color: #A3FFFA;
+  box-shadow: inset -1px 1px 2px black;
+  animation-name: lightsOff;
+  animation-duration: 0.2s;
+  animation-delay: 0.5s;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+.handle {
+  position: relative;
+  top: -300px;
+  bottom: 30vh;
+  height: 15vh;
+  width: 30px;
+  background-color: gray;
+  box-shadow: inset -1px 1px 2px black;
+}
+
+.sign {
+  position: relative;
+  width: 180px;
+  height: 100px;
+  top: 115px;
+  margin: auto;
+  background-color: #467F4D;
+  border-radius: 5px;
+  border: 5px solid gray;
+  transform-origin: top;
+  animation: flipSign 1.2s linear 1s forwards, swing 1s 2s linear forwards;
+}
+
+.sign-text {
+  position: relative;
+  text-align: center;
+  font-family: "Shadows Into Light", cursive;
+  top: -98px;
+  font-weight: 600;
+  font-size: 3.5em;
+  color: white;
+}
+
+#openText {
+  animation: hideText 0s 1.6s forwards;
+}
+
+#closedText {
+  visibility: hidden;
+  position: relative;
+  top: -90px;
+  animation: showText 0s 1.6s forwards;
+}
+
+.rope {
+  position: relative;
+  top: -55px;
+  left: 35px;
+  width: 100px;
+  height: 100px;
+  background-color: transparent;
+  border-left: 5px solid gray;
+  border-top: 5px solid gray;
+  border-radius: 10px;
+  transform: rotate(45deg);
+}
+
+.hook {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  top: 63px;
+  z-index: 99;
+  left: -2px;
+  margin: auto;
+  border-radius: 50%;
+  background-color: silver;
+  box-shadow: 1px -1px black;
+}
+
+.error-text {
+  width: 100%;
+  padding-top: 50px;
+  text-align: center;
+  font-size: 2.5vw;
+  color: white;
+  font-family: "Bai Jamjuree", sans-serif;
+  color: #424242;
+  animation: errorTextAnimation 2s ease-out 1.5s forwards;
+}
+
+@keyframes lightsOff {
+  from {
+    background-color: #A3FFFA;
+  }
+  to {
+    background-color: #191919;
+  }
+}
+@keyframes flipSign {
+  50% {
+    transform: rotateY(45deg);
+    background-color: #467F4D;
+  }
+  51% {
+    transform: rotateY(90deg);
+    background-color: #D60000;
+  }
+  100% {
+    transform: rotateY(0deg);
+    background-color: #D60000;
+  }
+}
+@keyframes hideText {
+  from {
+    visibility: visible;
+  }
+  to {
+    visibility: hidden;
+  }
+}
+@keyframes showText {
+  from {
+    visibility: hidden;
+  }
+  to {
+    visibility: visible;
+  }
+}
+@keyframes swing {
+  25% {
+    transform: rotateZ(5deg) translate(-5px, -5px);
+  }
+  50% {
+    transform: rotateZ(-6deg) translate(3px, 3px);
+  }
+  75% {
+    transform: rotateZ(4deg) translate(-3px, -3px);
+  }
+}
+@keyframes errorTextAnimation {
+  0% {
+    color: #424242;
+  }
+  50% {
+    color: white;
+    font-size: 2em;
+  }
+  100% {
+    color: white;
+  }
+}
+</style>
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<div class="wall">
+  <div class="window"></div>
+  <div class="door">
+    <div class="address">409</div>
+    <div class="door-window">
+      <div class="hook"></div>
+      <div class="sign">
+        <div class="rope"></div>
+        <div class="sign-text">
+          <span id="openText">OPEN</span>
+          <span id="closedText">CLOSED</span>
+        </div>
+      </div>
+    </div>
+    <div class="handle"></div>
+  </div>
+</div>
+
+<div class="textContainer">
+  <div class="error-text">Похоже, что такое имя уже занято.</div>
+</div>
+<!-- partial -->
+  
+</body>
+</html>

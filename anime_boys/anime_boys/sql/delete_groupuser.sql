@@ -1,0 +1,1 @@
+delete from groupuser where user_ = %(user_id)s and group_ = %(group_id)s
