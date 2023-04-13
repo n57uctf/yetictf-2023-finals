@@ -159,8 +159,8 @@ jobs:
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
 
-      - name: Show applications folder
-        if: ${{ failure() && (steps.checker-pull-0.conclusion == 'failure' || steps.checker-pull-0.conclusion == 'failure')  }}
+      - name: (DEBUG) Show applications folder
+        if: ${{ failure() && (steps.checker-push-0.conclusion == 'failure' || steps.checker-pull-0.conclusion == 'failure')  }}
         run: |
           echo "--- HOST ---"
           id 
@@ -206,11 +206,11 @@ jobs:
           if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
           exit 0
 
-      - run: docker compose logs webserver
+      - run: (DEBUG) docker compose logs webserver
         if: ${{ failure() }}
         working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
-      - run: docker compose logs postgres
+      - run: (DEBUG) docker compose logs postgres
         if: ${{ failure() }}
         working-directory: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
