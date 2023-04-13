@@ -88,7 +88,7 @@ jobs:
 
       - name: docker compose up
         run: |
-          bash fixperm.sh
+          bash host_prepare.sh
           docker compose up -d --remove-orphans --quiet-pull --wait --no-build
         env: 
           IMAGE: ${{ steps.meta.outputs.tags }}
