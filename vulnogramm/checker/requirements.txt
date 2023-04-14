@@ -1,5 +1,0 @@
-typing
-pytesseract==0.3.10
-requests
-Pillow==9.5.0
-
