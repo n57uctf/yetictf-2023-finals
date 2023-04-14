@@ -9,10 +9,6 @@ import os
 import base64
 import json
 
-<<<<<<< HEAD
-PORT=1111
-=======
->>>>>>> 9c26804f60257ec8cb3442153f71cf73c3bf58ac
 
 class Status(enum.Enum):
     OK = 101
@@ -172,13 +168,6 @@ def get_random_name():
 def push(args: PushArgs) -> CheckerResult:
     login = get_random_name()
     passwordik = get_random_password(16)
-<<<<<<< HEAD
-    r1 = requests.post(f'http://{args.host}:{PORT}/register',
-                       data={'inputName': login, 'inputPassword': passwordik, 'inputConfirmPassword': passwordik},
-                       allow_redirects=False)
-    r2 = requests.post(f'http://{args.host}:{PORT}/login', data={'inputName': login, 'inputPassword': passwordik},
-                       allow_redirects=False)
-=======
     try:
         r1 = requests.post(f'http://{args.host}:8000/register',
                            data={'inputName': login, 'inputPassword': passwordik, 'inputConfirmPassword': passwordik},
@@ -187,7 +176,6 @@ def push(args: PushArgs) -> CheckerResult:
                            allow_redirects=False)
     except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
         return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
->>>>>>> 9c26804f60257ec8cb3442153f71cf73c3bf58ac
     if r2.status_code != 302:
         return CheckerResult(status=Status.MUMBLE.value, private_info='',
                              public_info=f'PUSH {Status.MUMBLE.value} {r2.url} - {r2.status_code}')
@@ -199,15 +187,11 @@ def push(args: PushArgs) -> CheckerResult:
         place = random.randint(0, 8679) % 2
 
     if place == 0:
-<<<<<<< HEAD
-        r3 = requests.post(f'http://{args.host}:{PORT}/user', cookies={'Cookies': r2.cookies['Cookies']}, data={'inputPrivatbio': args.flag})
-=======
         try:
             r3 = requests.post(f'http://{args.host}:8000/user', cookies={'Cookies': r2.cookies['Cookies']},
                                data={'inputPrivatbio': args.flag})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
->>>>>>> 9c26804f60257ec8cb3442153f71cf73c3bf58ac
         if r3.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='',
                                  public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
@@ -218,27 +202,16 @@ def push(args: PushArgs) -> CheckerResult:
         return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(private_info.encode()).decode(),
                              public_info='PUSH works')
     else:
-<<<<<<< HEAD
-        r3 = requests.post(f'http://{args.host}:{PORT}/', cookies={'Cookies': r2.cookies['Cookies']}, data={'isPublic': False, 'groupName': get_random_string(), 'groupDescription': get_random_string()})
-=======
         try:
             r3 = requests.post(f'http://{args.host}:8000/', cookies={'Cookies': r2.cookies['Cookies']},
                                data={'isPublic': False, 'groupName': get_random_string(),
                                      'groupDescription': get_random_string()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
->>>>>>> 9c26804f60257ec8cb3442153f71cf73c3bf58ac
         if r3.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='',
                                  public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         group_id = re.findall(r'/group/quit/[0-9]+', r3.text)[0][12:]
-<<<<<<< HEAD
-        r4 = requests.post(f'http://{args.host}:{PORT}/group/{group_id}', cookies={'Cookies': r2.cookies['Cookies']}, data={'threadName': get_random_string(), 'threadDescription': get_random_string()})
-        if r4.status_code != 200:
-            return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r4.url} - {r4.status_code}')
-        thread_id = re.findall(r'/thread/[0-9]+',r4.text)[0][8:]
-        r5 = requests.post(f'http://{args.host}:{PORT}/thread/{thread_id}', cookies={'Cookies': r2.cookies['Cookies']}, data={'addComment': args.flag})
-=======
         try:
             r4 = requests.post(f'http://{args.host}:8000/group/{group_id}', cookies={'Cookies': r2.cookies['Cookies']},
                                data={'threadName': get_random_string(), 'threadDescription': get_random_string()})
@@ -253,7 +226,6 @@ def push(args: PushArgs) -> CheckerResult:
                                data={'addComment': args.flag})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
->>>>>>> 9c26804f60257ec8cb3442153f71cf73c3bf58ac
         if r5.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='',
                                  public_info=f'PUSH {Status.MUMBLE.value} {r5.url} - {r5.status_code}')
@@ -268,14 +240,10 @@ def push(args: PushArgs) -> CheckerResult:
 def pull(args: PullArgs) -> CheckerResult:
     private_info = json.loads(base64.b64decode(args.private_info).decode())
     if private_info['place'] == 0:
-<<<<<<< HEAD
-        r1 = requests.get(f'http://{args.host}:{PORT}/user', cookies={'Cookies': private_info['Cookies']})
-=======
         try:
             r1 = requests.get(f'http://{args.host}:8000/user', cookies={'Cookies': private_info['Cookies']})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
->>>>>>> 9c26804f60257ec8cb3442153f71cf73c3bf58ac
         if r1.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=private_info,
                                  public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
@@ -284,15 +252,11 @@ def pull(args: PullArgs) -> CheckerResult:
                                  public_info=f'PULL {Status.CORRUPT.value} Can not pull flag')
         return CheckerResult(status=Status.OK.value, private_info=private_info, public_info='PULL works')
     else:
-<<<<<<< HEAD
-        r1 = requests.get(f'http://{args.host}:{PORT}/thread/{private_info["thread_id"]}', cookies={'Cookies': private_info['Cookies']})
-=======
         try:
             r1 = requests.get(f'http://{args.host}:8000/thread/{private_info["thread_id"]}',
                               cookies={'Cookies': private_info['Cookies']})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
->>>>>>> 9c26804f60257ec8cb3442153f71cf73c3bf58ac
         if r1.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info=private_info,
                                  public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
