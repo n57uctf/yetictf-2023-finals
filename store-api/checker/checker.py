@@ -11,6 +11,7 @@ import base64
 from typing import NamedTuple, Dict, Tuple
 from enum import Enum
 from datetime import datetime
+import base64
 
 
 PORT = 8080
@@ -350,6 +351,7 @@ def push(args: PushArgs) -> CheckerResult:
         _private_info['refresh_token'] = refresh_token
         _private_info['product_id'] = product_id
         _private_info['secret_key'] = secret_key
+        _private_info = base64.b64encode(json.dumps(_private_info).encode()).decode()
         return CheckerResult(
             status=Status.OK.value,
             private_info=json.dumps(_private_info),
@@ -365,7 +367,7 @@ def push(args: PushArgs) -> CheckerResult:
 
 def pull(args: PullArgs) -> CheckerResult:
     api_base_url = f'http://{args.host}:{PORT}/api/v1'
-    private_info = json.loads(args.private_info)
+    private_info = json.loads(base64.b64decode(args.private_info).decode())
     email = private_info.get('email')
     password = private_info.get('password')
     round_number = private_info.get('round_number')
