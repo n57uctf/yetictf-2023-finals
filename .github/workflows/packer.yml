@@ -131,6 +131,9 @@ jobs:
         id: today
         run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
+      - name: (DEBUG) check output folder
+        run: ls -alh ./.vulnbox/output-vulnbox/
+      
       - name: ZIP w\ password
         run: zip -e -P $ZIP_PASSWORD ${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.PKR_VAR_event }}.ova
         working-directory: ./.vulnbox/output-vulnbox/

@@ -12,8 +12,8 @@ Vagrant.configure("2") do |config|
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
     vb.check_guest_additions = true
-    vb.memory = "16384"
-    vb.cpus = 4
+    vb.memory = "2048"
+    vb.cpus = 2
   end
   config.vm.synced_folder "../", "/vagrant"
   config.vm.boot_timeout = 1200

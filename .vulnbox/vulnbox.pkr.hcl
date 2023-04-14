@@ -53,7 +53,7 @@ source "virtualbox-vm" "vulnbox" {
     "--manifest",
     "--vsys", "0",
     "--vmname", "${var.event}",
-    "--description", "ssh ${var.username}@10.0.<N>.2\nPassword: ${var.password}"
+    "--description", "ssh ${var.username}@10.0.<N>.2\nPassword: ${var.password}\nПримечание:\n- Bridge-адаптер - второй из четырех\nVulnogramm - исходного кода для бэка нет!\n"
   ]
   output_filename = "${var.event}"
   format = "ova"
@@ -84,7 +84,8 @@ build {
       "find /vagrant -name \"docker-compose.yml\" -print0 | xargs -0 -I {} sudo -E -u ${var.username} sh -c 'cp -r $(dirname {}) /home/${var.username}/'",
       "sudo -E -u ${var.username} rm -rf /home/${var.username}/.jury",
       "sudo -E -u ${var.username} find /home/${var.username}/ -name \"host_prepare.sh\" -exec echo FOUND PREPARE {} \\; -exec bash {} \\;",
-      "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec echo FOUND docker-compose {} \\; -exec docker-compose -f {} up --build -d \\;"
+      "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec echo FOUND docker-compose {} \\; -exec docker-compose -f {} up --build -d \\;",
+      "sudo -E -u ${var.username} rm -rf /home/${var.username}/vulnogramm/Exsample"
     ]
   }
 
