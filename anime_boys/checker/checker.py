@@ -9,6 +9,7 @@ import os
 import base64
 import json
 
+PORT = 1111
 
 class Status(enum.Enum):
     OK = 101
