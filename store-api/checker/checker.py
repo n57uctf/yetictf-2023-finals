@@ -10,6 +10,8 @@ import hashlib
 import base64
 from typing import NamedTuple, Dict, Tuple
 from enum import Enum
+from datetime import datetime
+
 
 PORT = 8080
 
@@ -145,14 +147,26 @@ def push(args: PushArgs) -> CheckerResult:
                     private_info=f'PUSH {Status.CORRUPT.value} empty products list on url {response.url}',
                     public_info=f'PUSH {Status.CORRUPT.value} empty products list on url {response.url}'
                 )
-            test_product = products[0]
+            test_product = products[0].get('product')
             for product in products:
-                if product.get('price') not in range(3000, 1_000_001):
+                key_info = product.get('key_info')
+                created_at = key_info.get('created_at')
+                updated_at = key_info.get('updated_at')
+                created_at_datetime = datetime.strptime(created_at, '%Y-%m-%dT%H:%M:%S.%fZ').replace(microsecond=0)
+                updated_at_datetime = datetime.strptime(updated_at, '%Y-%m-%dT%H:%M:%S.%fZ').replace(microsecond=0)
+                if created_at_datetime != updated_at_datetime:
+                    return CheckerResult(
+                        status=Status.MUMBLE.value,
+                        private_info=f'{response.status_code}',
+                        public_info=f'PUSH {Status.MUMBLE.value} invalid product ket info on url {response.url}'
+                    )
+                if product.get('product').get('price') not in range(3000, 1_000_001):
                     return CheckerResult(
                         status=Status.CORRUPT.value,
                         private_info=f'{response.status_code}',
                         public_info=f'PUSH {Status.CORRUPT.value} invalid product price on url {response.url}'
                     )
+
         except Exception as e:
             return CheckerResult(
                 status=Status.MUMBLE.value,
@@ -196,7 +210,7 @@ def push(args: PushArgs) -> CheckerResult:
         return CheckerResult(
             status=Status.MUMBLE.value,
             private_info=f'{str(e)}',
-            public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}, error: {str(e)}'
+            public_info=f'PUSH {Status.MUMBLE.value} failed to get promocodes list on host {args.host}, error: {str(e)}'
         )
 
     # Check client info
@@ -232,7 +246,7 @@ def push(args: PushArgs) -> CheckerResult:
         return CheckerResult(
             status=Status.MUMBLE.value,
             private_info=f'{str(e)}',
-            public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}, error: {str(e)}'
+            public_info=f'PUSH {Status.MUMBLE.value} failed to get client info on host {args.host}, error: {str(e)}'
         )
 
     # Check adding product to basket
@@ -255,7 +269,7 @@ def push(args: PushArgs) -> CheckerResult:
         return CheckerResult(
             status=Status.MUMBLE.value,
             private_info=f'{str(e)}',
-            public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}, error: {str(e)}'
+            public_info=f'PUSH {Status.MUMBLE.value} failed to add product to basket on host {args.host}, error: {str(e)}'
         )
 
     # Check creating order
@@ -292,7 +306,7 @@ def push(args: PushArgs) -> CheckerResult:
         return CheckerResult(
             status=Status.MUMBLE.value,
             private_info=f'{str(e)}',
-            public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}, error: {str(e)}'
+            public_info=f'PUSH {Status.MUMBLE.value} failed to create order on host {args.host}, error: {str(e)}'
         )
 
     # Insert flag
@@ -426,8 +440,9 @@ def pull(args: PullArgs) -> CheckerResult:
                 public_info=f'PULL {Status.MUMBLE.value} can not get flag: {response.url}, content: {response.text}'
             )
         data = json.loads(response.text)[0]
-        description = data.get('description')
-        price = data.get('price')
+        response_product = data.get('product')
+        description = response_product.get('description')
+        price = response_product.get('price')
         if price > 1_000_000:
             return CheckerResult(
                 status=Status.CORRUPT.value,

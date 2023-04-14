@@ -1,6 +1,6 @@
 version: "3.1"
 
-x-healthcheck: 
+x-healthcheck:
   &healthcheck
   test: curl -f http://localhost/
   interval: 30s
@@ -35,8 +35,7 @@ services:
       - .:/src
     restart: always
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     healthcheck:
       << : *healthcheck
       test: curl http://127.0.0.1:8000/
@@ -47,8 +46,7 @@ services:
       context: ./nginx/
       dockerfile: Dockerfile
     depends_on:
-      django:
-        condition: service_started
+      - django
     ports:
       - "8080:8080"
     volumes:

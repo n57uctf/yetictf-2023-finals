@@ -17,7 +17,26 @@ class AddProductSerializer(serializers.Serializer):
     )
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Products
-        fields = '__all__'
+class ProductSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    description = serializers.CharField()
+    price = serializers.IntegerField()
+
+
+class ProductCreationSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    description = serializers.CharField()
+    price = serializers.IntegerField()
+
+
+class DateTimeSerializer(serializers.Serializer):
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+class ProductsListSerializer(serializers.Serializer):
+    product = ProductSerializer()
+    key_info = DateTimeSerializer()
+
+
