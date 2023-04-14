@@ -49,12 +49,13 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'tokens',
+    'secretkeys',
+    'reviews',
     'clients',
     'products',
     'basket',
     'promocodes',
     'orders',
-    'checker',
 ]
 
 MIDDLEWARE = [
@@ -91,7 +92,8 @@ WSGI_APPLICATION = 'store.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
+#
+#
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',

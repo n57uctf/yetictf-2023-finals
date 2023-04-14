@@ -18,6 +18,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'store.settings')
 django.setup()
 from products.models import Products
 from promocodes.models import PromoCodes
+from secretkeys.services import generate_random_string, save_secret_key, encode_string
 
 os.system('python3 manage.py collectstatic --noinput')
 os.system('python3 manage.py makemigrations')
@@ -41,10 +42,13 @@ _promo_codes = {
     '0482f6eefc0ec185cc0c78c831d21650f85ebfaa6503dd9677c25cbfe5b041f8': 100
 }
 
-test_code = PromoCodes.objects.filter(code='af3868c2311eed4d20917eb2c0195ae5c4c7415e8cc4b967429ff234dea3645f').first()
-if test_code is None:
-    for code, amount in _promo_codes.items():
-        PromoCodes.objects.create(code=code, amount=amount)
+promo_codes_objects = [
+    PromoCodes(code=code, amount=amount)
+    for code, amount in _promo_codes.items()
+]
+
+PromoCodes.objects.bulk_create(promo_codes_objects)
+
 
 _products = {
     'Compact refrigerator': {
@@ -305,12 +309,17 @@ _products = {
     },
 }
 
-products_django_objects = [
-    Products(name=product_name, description=product_info.get('description'), price=product_info.get('price'))
-    for product_name, product_info in _products.items()
-]
 
-Products.objects.bulk_create(products_django_objects)
+for product_name, product_info in _products.items():
+    secret_key = generate_random_string()
+    encoded_description = encode_string(product_info.get('description'), secret_key)
+    product = Products.objects.create(
+        name=product_name,
+        description=encoded_description,
+        price=product_info.get('price')
+    )
+    save_secret_key(secret_key, product.pk)
+
 
 os.system('touch inithialized')
 os.system('gunicorn store.wsgi:application -b 0.0.0.0:8000 --reload')
