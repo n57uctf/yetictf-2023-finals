@@ -8,29 +8,38 @@ x-healthcheck:
   retries: 5
   start_period: 10s
 
+x-envvar:
+  &envvar
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-supersecretkey}
+  JWT_SECRET_KEY: ${JWT_SECRET_KEY:-supersecretkey}
+  SWAGGER_URL: ${SWAGGER_URL:-"http://127.0.0.1:8000/"}
+  POSTGRES_DB: ${POSTGRES_DB:-postgres}
+  POSTGRES_USER: ${POSTGRES_USER:-admin}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+  DB_HOST: ${DB_HOST:-db}
+  DB_PORT: ${DB_PORT:-5432}
+
 services:
 
   db:
-    container_name: database
     image: postgres
     ports:
       - 5432:5432
-    env_file:
-      - ".env"
+    environment:
+      << : *envvar
     restart: always
     healthcheck:
       << : *healthcheck
       test: pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-db}
 
   django:
-    container_name: django
     image: ${IMAGE_BACKEND:-ghcr.io/n57uctf/store-api-backend:main}
     build:
       context: .
     ports:
       - 8000:8000
-    env_file:
-      - ".env"
+    environment:
+      << : *envvar
     volumes:
       - .:/src
     restart: always
