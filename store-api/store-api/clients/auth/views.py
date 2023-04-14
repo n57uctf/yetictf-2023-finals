@@ -33,16 +33,18 @@ class ClientAuthenticationAPIView(GenericAPIView):
         auth_serializer = ClientAuthenticationSerializer(data=data)
         if auth_serializer.is_valid():
             try:
-                user = auth_serializer.get_client()
-                refresh_token = get_refresh_token_or_none(user.pk)
+                client = auth_serializer.get_client()
+                refresh_token = get_refresh_token_or_none(client.pk)
                 if refresh_token is not None:
                     refresh_jwt = JWT(refresh_token.token)
                     if refresh_jwt.is_available():
-                        return Response(status=status.HTTP_304_NOT_MODIFIED)
+                        return Response(status=status.HTTP_304_NOT_MODIFIED, data={
+                            'client': 'Already authorized'
+                        })
                 jwt = JWT({
-                    'user_id': user.pk
+                    'user_id': client.pk
                 })
-                create_or_update_refresh_token(client_id=user.pk, token=jwt.refresh_token)
+                create_or_update_refresh_token(client_id=client.pk, token=jwt.refresh_token)
                 return Response(status=status.HTTP_200_OK, data=jwt.as_dict())
             except Clients.DoesNotExist:
                 return Response({
