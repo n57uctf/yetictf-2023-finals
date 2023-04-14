@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './css/App.css';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import Login from './commponents/Login';
 import Feed from './commponents/Feed';
 
 function App() {
@@ -10,11 +8,8 @@ function App() {
   return (
     <div className="App">
 
-      <BrowserRouter>
-        <Routes>
-          <Route extract path="/feed" element={<Feed />} />
-        </Routes>
-      </BrowserRouter>
+          <Feed/>
+
     </div>
   );
 }

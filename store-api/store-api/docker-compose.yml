@@ -3,10 +3,9 @@ version: "3.1"
 services:
 
   db:
-    container_name: database
     image: postgres
     ports:
-      - 5432:5432
+      - 5433:5432
     env_file:
       - ".env"
     volumes:
@@ -16,11 +15,8 @@ services:
     restart: always
 
   django:
-    container_name: django
     build:
       context: .
-    ports:
-      - 8000:8000
     env_file:
       - ".env"
     volumes:
@@ -41,7 +37,7 @@ services:
       - db
       - django
     ports:
-      - "8080:8080"
+      - "4444:8080"
     volumes:
       - ./static/:/static
     restart: always

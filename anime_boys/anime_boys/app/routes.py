@@ -116,7 +116,7 @@ async def get_user(request: Request, Cookies: str | None = Cookie(default=None))
         response = RedirectResponse('/login', status_code=status.HTTP_302_FOUND)
         response.delete_cookie(key='Cookies')
         return response
-    res = db.execute('read_user_like_desk',{'user':verify_auth_token(Cookies)}).one(User)
+    res = db.execute('read_user_profile',{'user':verify_auth_token(Cookies)}).one(User)
     return templates.TemplateResponse('./profile.html', context={'request': request,'byte_arr': base64.b64encode(bytes(res.img)).decode('utf-8'),'user':res, 'username' : res.nickname, 'isVipProfile' : ("обычный аккаунт", "VIP статус")[res.isvip]})
 @app.post("/user")
 async def post_user(request: Request, inputAvatar: UploadFile = File(default=None), inputBio: str = Form(default=None), inputPrivatbio: str = Form(default=None), Cookies: str | None = Cookie(default=None), isVip:str=Form(default=False)):
