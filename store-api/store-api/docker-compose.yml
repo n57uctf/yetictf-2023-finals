@@ -1,6 +1,6 @@
 version: "3.1"
 
-x-healthcheck: 
+x-healthcheck:
   &healthcheck
   test: curl -f http://localhost/
   interval: 30s
