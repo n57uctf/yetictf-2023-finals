@@ -42,8 +42,4 @@ services:
     expose:
       - 3000
     ports:
-      - 3000:3000
-    restart: always
-    depends_on:
-      web:
-        condition: service_started
+      - 5555:3000

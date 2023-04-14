@@ -1,6 +1,7 @@
 """
 Checker for service 'store-api'
 """
+from __future__ import annotations
 import json
 import requests
 import string
@@ -8,7 +9,7 @@ import random
 from typing import NamedTuple, Dict
 from enum import Enum
 
-PORT = 8000
+PORT = 4444
 
 
 class Status(Enum):
@@ -49,15 +50,11 @@ class PullArgs(NamedTuple):
     flag: str  # Флаг который нужно получить из сервиса
 
 
-class ServiceResponse(NamedTuple):
-    status: int
-    data: dict
-
-
 def push(args: PushArgs) -> CheckerResult:
     # Check connection
+    api_base_url = f'http://{args.host}:{PORT}/api/v1'
     try:
-        requests.post(f'http://{args.host}:{PORT}/api/checker/is-available/')
+        requests.post(f'{api_base_url}/checker/is-available/')
     except Exception as e:
         return CheckerResult(
             status=Status.DOWN.value,
@@ -70,7 +67,7 @@ def push(args: PushArgs) -> CheckerResult:
 
     try:
         response = requests.post(
-            f'http://{args.host}:{PORT}/api/v1/registration/',
+            f'{api_base_url}/registration/',
             json=registration_data
         )
         try:
@@ -78,31 +75,32 @@ def push(args: PushArgs) -> CheckerResult:
         except:
             return CheckerResult(
                 status=Status.MUMBLE.value,
-                private_info=f'JSON validation error on url: {response.url}',
+                private_info=f'{response.status_code}',
                 public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
             )
         access_token = data.get('access_token')
+        refresh_token = data.get('refresh_token')
         client_id = data.get('client_id')
-        if access_token is None or client_id is None:
+        if access_token is None or refresh_token is None or client_id is None:
             return CheckerResult(
-                status=Status.MUMBLE.value,
-                private_info=f'PUSH {Status.MUMBLE.value} registration failed on {response.url}',
-                public_info=f'PUSH {Status.MUMBLE.value} registration failed on url {response.url}'
-                            f': access_token or client_id is undefined'
+                status=Status.CORRUPT.value,
+                private_info=f'{response.status_code}',
+                public_info=f'PUSH {Status.CORRUPT.value} incomplete registration data on {response.url}'
+                            f': access_token, refresh_token or client_id is undefined'
             )
         auth_header = {'Authorization': f'Bearer {access_token}'}
 
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
-            private_info=f'PUSH {Status.MUMBLE.value} registration failed on host {args.host}',
+            private_info=f'{str(e)}',
             public_info=f'PUSH {Status.MUMBLE.value} registration failed on host {args.host}, error: {str(e)}'
         )
 
     # Check products list
     try:
         response = requests.get(
-            f'http://{args.host}:{PORT}/api/v1/products/',
+            f'{api_base_url}/products/',
             headers=auth_header
         )
         if response.status_code != 200:
@@ -119,32 +117,37 @@ def push(args: PushArgs) -> CheckerResult:
                     private_info=f'PUSH {Status.CORRUPT.value} empty products list on url {response.url}',
                     public_info=f'PUSH {Status.CORRUPT.value} empty products list on url {response.url}'
                 )
+            test_product = products[0]
             for product in products:
-                if product.get('price') not in range(3000, 100_001):
-                    ...
-        except:
+                if product.get('price') not in range(3000, 1_000_001):
+                    return CheckerResult(
+                        status=Status.CORRUPT.value,
+                        private_info=f'{response.status_code}',
+                        public_info=f'PUSH {Status.CORRUPT.value} invalid product price on url {response.url}'
+                    )
+        except Exception as e:
             return CheckerResult(
                 status=Status.MUMBLE.value,
-                private_info=f'JSON validation error on url: {response.url}',
+                private_info=f'{str(e)}',
                 public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
             )
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
-            private_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}',
+            private_info=f'{str(e)}',
             public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}'
         )
 
     # Check promocodes list
     try:
         response = requests.get(
-            f'http://{args.host}:{PORT}/api/v1/promocodes/',
+            f'{api_base_url}/promocodes/',
             headers=auth_header
         )
         if response.status_code != 200:
             return CheckerResult(
                 status=Status.MUMBLE.value,
-                private_info=f'PUSH {Status.MUMBLE.value} failed to get promocodes list on url {response.url}',
+                private_info=f'{str(e)}',
                 public_info=f'PUSH {Status.MUMBLE.value} failed to get promocodes list on url {response.url}'
             )
         try:
@@ -152,19 +155,19 @@ def push(args: PushArgs) -> CheckerResult:
             if len(promocodes) == 0:
                 return CheckerResult(
                     status=Status.CORRUPT.value,
-                    private_info=f'PUSH {Status.CORRUPT.value} empty promocodes list on url {response.url}',
+                    private_info=f'{response.status_code}',
                     public_info=f'PUSH {Status.CORRUPT.value} empty promocodes list on url {response.url}'
                 )
         except:
             return CheckerResult(
                 status=Status.MUMBLE.value,
-                private_info=f'JSON validation error on url: {response.url}',
+                private_info=f'{response.status_code}',
                 public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
             )
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
-            private_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}',
+            private_info=f'{str(e)}',
             public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}, error: {str(e)}'
         )
 
@@ -184,30 +187,90 @@ def push(args: PushArgs) -> CheckerResult:
             client_info = json.loads(response.text)
             if client_info.get('id') is None or \
                     client_info.get('email') is None or \
-                    client_info.get('password') is None or \
                     client_info.get('balance') is None or \
                     client_info.get('status') is None:
                 return CheckerResult(
                     status=Status.CORRUPT.value,
-                    private_info=f'PUSH {Status.CORRUPT.value} incomplete client info on url {response.url}',
+                    private_info=f'{response.status_code}',
                     public_info=f'PUSH {Status.CORRUPT.value} incomplete client info on url {response.url}'
                 )
-        except:
+        except Exception as e:
             return CheckerResult(
                 status=Status.MUMBLE.value,
-                private_info=f'JSON validation error on url: {response.url}',
+                private_info=f'{str(e)}',
                 public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
             )
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
-            private_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}',
+            private_info=f'{str(e)}',
             public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}, error: {str(e)}'
         )
 
+    # Check adding product to basket
     try:
         response = requests.post(
-            f'http://{args.host}:{PORT}/api/checker/put/',
+            f'http://{args.host}:{PORT}/api/v1/basket/add/',
+            json={
+                'client_id': client_id,
+                'product_id': test_product.get('pk')
+            },
+            headers=auth_header
+        )
+        if response.status_code != 200:
+            return CheckerResult(
+                status=Status.MUMBLE.value,
+                private_info=f'{response.status_code}',
+                public_info=f'PUSH {Status.MUMBLE.value} failed to add product to basket on url {response.url}'
+            )
+    except Exception as e:
+        return CheckerResult(
+            status=Status.MUMBLE.value,
+            private_info=f'{str(e)}',
+            public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}, error: {str(e)}'
+        )
+
+    # Check creating order
+    try:
+        response = requests.post(
+            f'http://{args.host}:{PORT}/api/v1/orders/create/',
+            json={
+                'client_id': client_id,
+            },
+            headers=auth_header
+        )
+        if response.status_code != 200:
+            return CheckerResult(
+                status=Status.MUMBLE.value,
+                private_info=f'{response.status_code}',
+                public_info=f'PUSH {Status.MUMBLE.value} failed to create order on url {response.url}'
+            )
+        try:
+            order_data = json.loads(response.text)
+            order_id = order_data.get('order_id')
+            if order_id is None or not str(order_id).isdigit():
+                return CheckerResult(
+                    status=Status.CORRUPT.value,
+                    private_info=f'{response.status_code}',
+                    public_info=f'PUSH {Status.CORRUPT.value} incomplete response on url {response.url}'
+                )
+        except:
+            return CheckerResult(
+                status=Status.MUMBLE.value,
+                private_info=f'{response.status_code}',
+                public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
+            )
+    except Exception as e:
+        return CheckerResult(
+            status=Status.MUMBLE.value,
+            private_info=f'{str(e)}',
+            public_info=f'PUSH {Status.MUMBLE.value} failed to get products list on host {args.host}, error: {str(e)}'
+        )
+
+    # Insert flag
+    try:
+        response = requests.post(
+            f'http://{args.host}:{PORT}/api/v1/checker/put/',
             json={
                 'round_number': args.round_number,
                 'flag': args.flag
@@ -216,29 +279,40 @@ def push(args: PushArgs) -> CheckerResult:
         if response.status_code != 200:
             return CheckerResult(
                 status=Status.CORRUPT.value,
-                private_info=f'PUSH {Status.CORRUPT.value} failed to put flag on host {args.host}',
+                private_info=f'{response.status_code}',
                 public_info=f'PUSH {Status.CORRUPT.value} failed to put flag on host {args.host}'
             )
+        _private_info = registration_data.copy()
+        _private_info['round_number'] = args.round_number
         return CheckerResult(
             status=Status.OK.value,
-            private_info='',
+            private_info=json.dumps(_private_info),
             public_info='PUSH works'
         )
-
     except Exception as e:
         return CheckerResult(
             status=Status.CORRUPT.value,
-            private_info=f'PUSH {Status.CORRUPT.value} failed to put flag on host {args.host}',
+            private_info=f'{str(e)}',
             public_info=f'PUSH {Status.CORRUPT.value} failed to put flag on host {args.host}, error: {str(e)}'
         )
 
 
 def pull(args: PullArgs) -> CheckerResult:
     try:
-        response = requests.get(
-            f'http://{args.host}:{PORT}/api/checker/pull/?private_info={args.private_info}&flag={args.flag}',
+        response = requests.post(
+            f'http://{args.host}:{PORT}/api/v1/checker/pull/',
+            json={
+                'private_info': args.private_info,
+                'flag': args.flag
+            }
         )
         if response.status_code != 200:
+            if response.status_code == 403:
+                return CheckerResult(
+                    status=Status.MUMBLE.value,
+                    private_info=f'{response.status_code}',
+                    public_info=f'PULL {Status.MUMBLE.value} can not login {response.url} - {response.status_code}'
+                )
             return CheckerResult(
                 status=Status.MUMBLE.value,
                 private_info=f'{response.status_code}',
@@ -260,11 +334,11 @@ def pull(args: PullArgs) -> CheckerResult:
         return CheckerResult(
             status=Status.MUMBLE.value,
             private_info=str(e),
-            public_info=f'PULL {Status.MUMBLE.value} flags dont match at host {args.host}, content: {e}'
+            public_info=f'PULL {Status.MUMBLE.value} can not get flag at host {args.host}, content: {e}'
         )
 
 
-def _generate_registration_data() -> Dict[str, str]:
+def _generate_registration_data() -> Dict[str, str | int]:
     return {
         'email': _generate_random_email(),
         'password': _generate_random_password()
@@ -281,7 +355,7 @@ def _generate_random_email() -> str:
 
 def _generate_random_password() -> str:
     password = ''
-    for _ in range(10):
+    for _ in range(30):
         password += random.choice(string.printable)
     return password
 
@@ -294,7 +368,6 @@ if __name__ == '__main__':
         if action == 'push':
             host, round_number, flag = args
             push_args = PushArgs(host=host,round_number=round_number, flag=flag)
-            # push_args.host, push_args.round_number, push_args.flag = args
             result = push(push_args)
         elif action =='pull':
             host, private_info, flag = args
@@ -312,3 +385,4 @@ if __name__ == '__main__':
         print(result.public_info, file=sys.stderr)
     print(result.private_info)
     exit(result.status)
+

@@ -132,7 +132,7 @@ class CreateOrderAPIView(GenericAPIView):
                 return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY, data={
                     'client_id': 'Basket is empty'
                 })
-            products_ids_list = [basket_product.pk for basket_product in basket_products]
+            products_ids_list = [basket_product.product.pk for basket_product in basket_products]
             save_order_products(order.pk, products_ids_list)
             return Response(status=status.HTTP_200_OK, data={
                 'order_id': order.pk

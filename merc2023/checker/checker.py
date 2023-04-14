@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-import requests, re, sys, random, datetime, zipfile
-from checklib import get_initialized_session, Status, rnd_username, rnd_string
+import requests, re, random, datetime, zipfile
+from checklib import Status, rnd_username, rnd_string, rnd_useragent
 from pathlib import Path
 import secrets
 from typing import NamedTuple
-import json
 import io
 import os
 
@@ -28,24 +27,27 @@ def check_status_code(resp: requests.Response, public_info: str) -> None:
 
 
 class CheckMachine:
-    @property
-
-    def url(self):
-        return f'http://{self.host}:{self.port}'
+    url: str
 
     def __init__(self, host: str):
-        self.host = host
-        self.port = 6666
+        self.url = f'http://{host}:6666'
 
     def register(self, first_name: str, last_name: str, dob: datetime.date) -> requests.Session:
-        sess = get_initialized_session()
-        sess.headers.update({'User-Agent': 'MERCOS v3.0'})
+        sess = requests.Session()
+        sess.headers.update({'User-Agent': 'MERCOS v3.0:'})
         resp = sess.post(f'{self.url}/registration.php', data={"first_name": first_name,"last_name": last_name,"dob": dob,"registration":""})
         check_status_code(resp,"Couldn't get register page")
-        return sess
+
+        resp = sess.get(f'{self.url}/security.php')
+        check_status_code(resp, "Couldn't get security page")
+        if re.findall(r'Your account access token is \<strong\>',resp.text):
+            return(resp.text.split('Your account access token is <strong>')[1].split('</strong>')[0])
+        else:
+            raise StatusException(status=Status.MUMBLE.value, private_info=sess.headers.get("User-Agent"), public_info="Couldn't get a Token")
+
 
     def login(self, token: str) -> requests.Session:
-        sess = get_initialized_session()
+        sess = requests.Session()
 
         sess.headers.update({'User-Agent': f'MERCOS v3.0:{token}'})
         resp = sess.get(f'{self.url}/profile.php')
@@ -57,14 +59,7 @@ class CheckMachine:
         else:
             raise StatusException(status=Status.MUMBLE.value, private_info=token, public_info="Couldn't get profile page")
 
-    def security(self, sess: requests.Session) -> str:
-        resp = sess.get(f'{self.url}/security.php')
-        check_status_code(resp, "Couldn't get security page")
 
-        if re.findall(r'Your account access token is \<strong\>',resp.text):
-            return(resp.text.split('Your account access token is <strong>')[1].split('</strong>')[0])
-        else:
-            raise StatusException(status=Status.MUMBLE.value, private_info=sess.headers.get("User-Agent"), public_info="Couldn't get a Token")
 
     def messenger(self, sess: requests.Session) -> str:
         resp = sess.get(f'{self.url}/messenger.php')
@@ -188,8 +183,7 @@ def push(args: PushArgs) -> CheckerResult:
     last_name = rnd_username()
     dob = datetime.date(1980,10,15) + datetime.timedelta(random.randint(1,3650))
     try:  
-        sess = chk.register(first_name,last_name,dob)
-        token = chk.security(sess)
+        token = chk.register(first_name,last_name,dob)
         sess = chk.login(token)
         if place == 0:
             result = chk.request_merc(sess, args.flag)
@@ -212,7 +206,7 @@ def push(args: PushArgs) -> CheckerResult:
 
 def pull(args: PullArgs) -> CheckerResult:
 
-    chk = CheckMachine(args.host)
+    chk = CheckMachine(host=args.host)
 
     place, pdata, token = args.private_info.strip().split(':')
     try:

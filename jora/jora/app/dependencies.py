@@ -12,7 +12,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 class Database:
     def __init__(self):
         self.connection = psycopg2.connect(user=os.environ.get("POSTGRES_USER") or 'postgres',
-                                           password=os.environ.get("POSTGRES_PASSWORD") or 'postgresql',
+                                           password=os.environ.get("POSTGRES_PASSWORD") or 'postgres',
                                            host=os.environ.get("POSTGRES_HOST") or '127.0.0.1',
                                            port=5432,
                                            database=os.environ.get("POSTGRES_DB") or "Jora",
@@ -143,14 +143,13 @@ class Project:
     def create_project(self, name, description, username):
         try:
             new_project = self.database.execute('''
-                with get_user as (select "@User" as user_id from "User" where "Username"=%s)
-                insert into "Project" ("Name", "Description", "Creator@") 
-                values (%s, %s, (select user_id from get_user limit 1)) 
-                returning "@Project" as project_id, "Name" as name, "Description" as description, True as creator, '{}'::text[] as tasks, 'task' as type
+with get_user as (select "@User" as user_id from "User" where "Username"=%s)
+insert into "Project" ("Name", "Description", "Creator@") 
+values (%s, %s, (select user_id from get_user limit 1)) 
+returning "@Project" as project_id, "Name" as name, "Description" as description, True as creator, '{}'::text[] as tasks, 'task' as type
                 ''', (username, name, description))
             project_data = new_project.fetchone()
             self.database.connection.commit()
-            print(project_data)
             return project_data
         except (Exception, Error) as error:
             raise HTTPException(400, "unexpected")
@@ -184,7 +183,6 @@ returning "User@" as user_id, "Project@" as project_id
             ''', (creator_username, username, project_id))
             project_access_data = new_access.fetchone()
             self.database.connection.commit()
-            print(project_access_data)
             return project_access_data
         except:
             raise HTTPException(400, "No such username")
@@ -240,7 +238,7 @@ select
 from get_projects gp 
 left join "Task" t on t."Project@" = gp.project_id
 group by 1,2,3,4
-                    ''', (username,))
+            ''', (username,))
             return projects.fetchall()
         except:
             raise HTTPException(400)
@@ -297,7 +295,6 @@ returning "@Task" as task_id, "Name" as name, "Description" as description, "Att
                 task_data = dict(task_data)
                 task_data.update({"responsible": responsible_username})
                 self.database.connection.commit()
-                print(task_data)
                 return task_data
             else:
                 return task_data
@@ -342,7 +339,6 @@ where "@Task"=%s
 returning "@Task" as task_id, "Name" as name, "Description" as description, "Attachments" as attachments, '' as responsible 	
             ''', (username, username, [filename], task_id, task_id))
             task_data = dict(update.fetchone())
-            print(task_data)
             self.database.connection.commit()
             return task_data
         except (Exception, Error) as error:
@@ -350,18 +346,17 @@ returning "@Task" as task_id, "Name" as name, "Description" as description, "Att
 
     def search(self, query):
         search = self.database.execute('''
-                with select_attach as (select unnest("Attachments") as attachment from "Task") 
-                select t."@Task" as task_id, 
-                t."Name" as name, 
-                t."Description" as description, 
-                t."Attachments" as attachments, 
-                u."Username" as responsible from "Task" t
-                join "User" u on t."Responsible@"=u."@User" 
-                where (t."Name" like %s) or (t."Description" like %s) or 
-                (t."Attachments" && (select array_agg(attachment) from select_attach where attachment like %s))
+with select_attach as (select unnest("Attachments") as attachment from "Task") 
+select t."@Task" as task_id, 
+t."Name" as name, 
+t."Description" as description, 
+t."Attachments" as attachments, 
+u."Username" as responsible from "Task" t
+join "User" u on t."Responsible@"=u."@User" 
+where (t."Name" like %s) or (t."Description" like %s) or 
+(t."Attachments" && (select array_agg(attachment) from select_attach where attachment like %s))
                 ''', ('%'+query+'%', '%'+query+'%', '%'+query+'%'))
         result = search.fetchall()
-        print(result)
         return result
 
 

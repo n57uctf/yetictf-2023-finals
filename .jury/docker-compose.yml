@@ -42,7 +42,7 @@ services:
       - ${POSTGRES_PORT:-5432}
     healthcheck:
       << : *healthcheck
-      test: pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-5432}
+      test: pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-tanuki-jury}
       start_period: 10s
 
   rabbitmq:
@@ -71,7 +71,7 @@ services:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - ./config.json:/code/config.json
+      - ${CONFIG_JSON:-"./config.json"}:/code/config.json
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -105,11 +105,11 @@ services:
   worker:
     build:
       context: .
-      dockerfile: ./worker/Dockerfile.example_service
+      dockerfile: Dockerfile.checkers
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - ./worker/checkers:/code/checkers
+      - ./checkers:/code/checkers
     << : *defaults
     environment:
       << : [*amqpenv, *debugenv]

@@ -61,4 +61,3 @@ class NewTaskModel(BaseModel):
     name: str
     description: str
     responsible: str
-    # attachments: list[str]
