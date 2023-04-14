@@ -38,6 +38,7 @@ services:
 
   frontend:
     image: ${IMAGE_FRONTEND:-ghcr.io/n57uctf/vulnogramm-frontend:main}
+    restart: always
     build: ./Vulnogramm_front/vulnogramm/.
     volumes:
       - .:/frontend
@@ -45,3 +46,6 @@ services:
       - 3000
     ports:
       - 5555:3000
+    depends_on:
+      web:
+        service_started

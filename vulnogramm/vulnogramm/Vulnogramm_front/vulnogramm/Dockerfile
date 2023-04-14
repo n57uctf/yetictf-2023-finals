@@ -9,7 +9,7 @@ COPY . .
 RUN npm run build
 
 # NGINX BUILD
-FROM nginx:1.17.1-alpine
+FROM nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 
 COPY --from=react_build /frontend/build/ /usr/share/nginx/html
