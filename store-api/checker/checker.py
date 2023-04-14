@@ -90,6 +90,8 @@ def push(args: PushArgs) -> CheckerResult:
                 public_info=f'PUSH {Status.CORRUPT.value} incomplete registration response on {response.url}'
                             f': email, password, balance or id is undefined'
             )
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
@@ -121,6 +123,8 @@ def push(args: PushArgs) -> CheckerResult:
                             f': email, password, balance or id is undefined'
             )
         auth_header = {'Authorization': f'Bearer {access_token}'}
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
@@ -167,13 +171,16 @@ def push(args: PushArgs) -> CheckerResult:
                         private_info=f'{response.status_code}',
                         public_info=f'PUSH {Status.CORRUPT.value} invalid product price on url {response.url}'
                     )
-
+        except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+            return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         except Exception as e:
             return CheckerResult(
                 status=Status.MUMBLE.value,
                 private_info=f'{str(e)}',
                 public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
             )
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
@@ -207,6 +214,8 @@ def push(args: PushArgs) -> CheckerResult:
                 private_info=f'{response.status_code}',
                 public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
             )
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
@@ -237,12 +246,16 @@ def push(args: PushArgs) -> CheckerResult:
                     private_info=f'{response.status_code}',
                     public_info=f'PUSH {Status.CORRUPT.value} incomplete client info on url {response.url}'
                 )
+        except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+            return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         except Exception as e:
             return CheckerResult(
                 status=Status.MUMBLE.value,
                 private_info=f'{str(e)}',
                 public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
             )
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
@@ -266,6 +279,8 @@ def push(args: PushArgs) -> CheckerResult:
                 private_info=f'{response.status_code}',
                 public_info=f'PUSH {Status.MUMBLE.value} failed to add product to basket on url {response.url}'
             )
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
@@ -303,6 +318,8 @@ def push(args: PushArgs) -> CheckerResult:
                 private_info=f'{response.status_code}',
                 public_info=f'JSON validation error on url: {response.url}, content: {response.text}'
             )
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
@@ -357,6 +374,8 @@ def push(args: PushArgs) -> CheckerResult:
             private_info=json.dumps(_private_info),
             public_info='PUSH works'
         )
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.CORRUPT.value,
@@ -403,11 +422,13 @@ def pull(args: PullArgs) -> CheckerResult:
                 )
             private_info['access_token'] = access_token
             private_info['refresh_token'] = refresh_token
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
             private_info=str(e),
-            public_info=f'PULL {Status.MUMBLE.value} can not get flag at host {args.host}, content: {e}'
+            public_info=f'PULL {Status.MUMBLE.value} can not get flag at host {args.host},'
         )
     # Get flag
     auth_header = {'Authorization': f'Bearer {access_token}'}
@@ -464,11 +485,13 @@ def pull(args: PullArgs) -> CheckerResult:
             private_info=str(args.private_info),
             public_info='PULL works'
         )
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(
             status=Status.MUMBLE.value,
             private_info=str(e),
-            public_info=f'PULL {Status.MUMBLE.value} can not get flag at host {args.host}, content: {e}'
+            public_info=f'PULL {Status.MUMBLE.value} can not get flag at host {args.host}'
         )
 
 
