@@ -269,7 +269,7 @@ if __name__ == '__main__':
         raise
     except Exception as e:
         result = CheckerResult(status=Status.ERROR.value, private_info='', public_info=str(e))
-    #if result.status != Status.OK.value:
-    print(result.public_info, file=sys.stderr)
+    if result.status != Status.OK.value:
+    	print(result.public_info, file=sys.stderr)
     print(result.private_info)
     exit(result.status)
