@@ -387,7 +387,11 @@ def push(args: PushArgs) -> CheckerResult:
         with open('Pico/'+(os.listdir('Pico')[photo_ind]), 'rb') as image_file:
             encodedPhoto = base64.b64encode(image_file.read()).decode()
         photo = encodedPhoto
-        method = random.randint(0, 2)
+
+        if "PUSH_PLACE" in os.environ:
+            method = int(os.environ.get("PUSH_PLACE"))
+        else:
+            method = random.randint(0, 2)
         subscript = "id: " + str(random.randint(0, 15747) - 346)
     except Exception as e:
         return CheckerResult(status=Status.ERROR.value,
