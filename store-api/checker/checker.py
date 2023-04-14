@@ -14,6 +14,22 @@ from datetime import datetime
 import base64
 
 
+agents = [
+    'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0',
+    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 YaBrowser/20.9.3.136 Yowser/2.5 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/62.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 11.1; rv:84.0) Gecko/20100101 Firefox/84.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36 Maxthon/5.3.8.2000',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+]
+
+def rnd_agent():
+    return random.choice(agents)
+
+
 PORT = 4444
 
 
@@ -63,7 +79,7 @@ def push(args: PushArgs) -> CheckerResult:
     try:
         response = requests.post(
             f'{api_base_url}/registration/',
-            json=registration_data
+            json=registration_data, headers={'User-Agent': rnd_agent()}
         )
         if response.status_code != 201:
             return CheckerResult(
@@ -103,7 +119,7 @@ def push(args: PushArgs) -> CheckerResult:
     try:
         response = requests.post(
             f'{api_base_url}/auth/',
-            json=registration_data
+            json=registration_data, headers={'User-Agent': rnd_agent()}
         )
         try:
             data = json.loads(response.text)
@@ -122,7 +138,7 @@ def push(args: PushArgs) -> CheckerResult:
                 public_info=f'PUSH {Status.CORRUPT.value} incomplete authorization response on {response.url}'
                             f': email, password, balance or id is undefined'
             )
-        auth_header = {'Authorization': f'Bearer {access_token}'}
+        auth_header = {'Authorization': f'Bearer {access_token}', 'User-Agent': rnd_agent()}
     except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
         return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
@@ -401,7 +417,7 @@ def pull(args: PullArgs) -> CheckerResult:
             json={
                 'email': email,
                 'password': password
-            }
+            }, headers={'User-Agent': rnd_agent()}
         )
         if response.status_code != 200:
             if response.status_code != 304:
@@ -431,7 +447,7 @@ def pull(args: PullArgs) -> CheckerResult:
             public_info=f'PULL {Status.MUMBLE.value} can not get flag at host {args.host},'
         )
     # Get flag
-    auth_header = {'Authorization': f'Bearer {access_token}'}
+    auth_header = {'Authorization': f'Bearer {access_token}', 'User-Agent': rnd_agent()}
     try:
         response = requests.get(
             f'{api_base_url}/products/?id={product_id}',
@@ -441,7 +457,7 @@ def pull(args: PullArgs) -> CheckerResult:
             new_tokens = requests.patch(f'{api_base_url}/tokens/update/', json={
                 'access_token': access_token,
                 'refresh_token': refresh_token
-            })
+            }, headers={'User-Agent': rnd_agent()})
             if new_tokens.status_code != 200:
                 return CheckerResult(
                     status=Status.MUMBLE.value,

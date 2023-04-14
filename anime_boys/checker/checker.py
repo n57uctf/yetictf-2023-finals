@@ -9,6 +9,22 @@ import os
 import base64
 import json
 
+agents = [
+    'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0',
+    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 YaBrowser/20.9.3.136 Yowser/2.5 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.105 YaBrowser/21.3.3.230 Yowser/2.5 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/62.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 11.1; rv:84.0) Gecko/20100101 Firefox/84.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36 Maxthon/5.3.8.2000',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+]
+
+def rnd_agent():
+    return random.choice(agents)
+
+
 PORT = 1111
 
 class Status(enum.Enum):
@@ -172,9 +188,9 @@ def push(args: PushArgs) -> CheckerResult:
     try:
         r1 = requests.post(f'http://{args.host}:{PORT}/register',
                            data={'inputName': login, 'inputPassword': passwordik, 'inputConfirmPassword': passwordik},
-                           allow_redirects=False)
+                           allow_redirects=False, headers={'User-Agent': rnd_agent()})
         r2 = requests.post(f'http://{args.host}:{PORT}/login', data={'inputName': login, 'inputPassword': passwordik},
-                           allow_redirects=False)
+                           allow_redirects=False, headers={'User-Agent': rnd_agent()})
     except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
         return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     if r2.status_code != 302:
@@ -190,7 +206,7 @@ def push(args: PushArgs) -> CheckerResult:
     if place == 0:
         try:
             r3 = requests.post(f'http://{args.host}:{PORT}/user', cookies={'Cookies': r2.cookies['Cookies']},
-                               data={'inputPrivatbio': args.flag})
+                               data={'inputPrivatbio': args.flag}, headers={'User-Agent': rnd_agent()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         if r3.status_code != 200:
@@ -206,7 +222,7 @@ def push(args: PushArgs) -> CheckerResult:
         try:
             r3 = requests.post(f'http://{args.host}:{PORT}/', cookies={'Cookies': r2.cookies['Cookies']},
                                data={'isPublic': False, 'groupName': get_random_string(),
-                                     'groupDescription': get_random_string()})
+                                     'groupDescription': get_random_string()}, headers={'User-Agent': rnd_agent()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         if r3.status_code != 200:
@@ -215,7 +231,7 @@ def push(args: PushArgs) -> CheckerResult:
         group_id = re.findall(r'/group/quit/[0-9]+', r3.text)[0][12:]
         try:
             r4 = requests.post(f'http://{args.host}:{PORT}/group/{group_id}', cookies={'Cookies': r2.cookies['Cookies']},
-                               data={'threadName': get_random_string(), 'threadDescription': get_random_string()})
+                               data={'threadName': get_random_string(), 'threadDescription': get_random_string()}, headers={'User-Agent': rnd_agent()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         if r4.status_code != 200:
@@ -224,7 +240,7 @@ def push(args: PushArgs) -> CheckerResult:
         thread_id = re.findall(r'/thread/[0-9]+', r4.text)[0][8:]
         try:
             r5 = requests.post(f'http://{args.host}:{PORT}/thread/{thread_id}', cookies={'Cookies': r2.cookies['Cookies']},
-                               data={'addComment': args.flag})
+                               data={'addComment': args.flag}, headers={'User-Agent': rnd_agent()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         if r5.status_code != 200:
@@ -242,7 +258,7 @@ def pull(args: PullArgs) -> CheckerResult:
     private_info = json.loads(base64.b64decode(args.private_info).decode())
     if private_info['place'] == 0:
         try:
-            r1 = requests.get(f'http://{args.host}:{PORT}/user', cookies={'Cookies': private_info['Cookies']})
+            r1 = requests.get(f'http://{args.host}:{PORT}/user', cookies={'Cookies': private_info['Cookies']}, headers={'User-Agent': rnd_agent()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         if r1.status_code != 200:
@@ -255,7 +271,7 @@ def pull(args: PullArgs) -> CheckerResult:
     else:
         try:
             r1 = requests.get(f'http://{args.host}:{PORT}/thread/{private_info["thread_id"]}',
-                              cookies={'Cookies': private_info['Cookies']})
+                              cookies={'Cookies': private_info['Cookies']}, headers={'User-Agent': rnd_agent()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         if r1.status_code != 200:
