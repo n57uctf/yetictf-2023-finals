@@ -1,0 +1,16 @@
+<div class="page">
+    <form>
+        <h2>Аутентификация</h2>
+        <mat-form-field appearance="fill">
+            <mat-label>Логин</mat-label>
+            <input matInput #_username>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+            <mat-label>Пароль</mat-label>
+            <input matInput type="password" #_password>
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="button" (click)="login(_username.value, _password.value)">Войти</button>
+        <button mat-button type="button" [routerLink]="'/register'">Нет аккаунта?</button>
+        <button mat-button type="button" [routerLink]="'/backup'">Забыл пароль?</button>
+    </form>
+</div>

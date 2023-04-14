@@ -1,0 +1,25 @@
+<div class="page">
+    <div class="welcome" *ngIf="registeredUsers">
+        <h2>Приветствуем новых пользователей</h2>
+        <mat-grid-list [cols]="5" [rowHeight]="30">
+            <mat-grid-tile [colspan]="1" *ngFor="let username of registeredUsers"><i>{{ username.username }}</i></mat-grid-tile>
+        </mat-grid-list>
+    </div>
+    <form>
+        <h2>Регистрация</h2>
+        <mat-form-field appearance="fill">
+            <mat-label>Логин</mat-label>
+            <input matInput #_username>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+            <mat-label>Пароль</mat-label>
+            <input matInput type="password" #_password1>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+            <mat-label>Еще пароль</mat-label>
+            <input matInput type="password" #_password2>
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="button" (click)="register(_username.value, _password1.value, _password2.value)">Регистрация</button>
+        <button mat-button type="button" [routerLink]="'/login'">Уже есть аккаунт?</button>
+    </form>
+</div>

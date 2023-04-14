@@ -1,0 +1,60 @@
+version: '3.8'
+
+x-healthcheck: 
+  &healthcheck
+  test: curl -f http://localhost/
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 10s
+
+x-psqlenv: 
+  &psqlenv
+  POSTGRES_HOST: ${POSTGRES_HOST:-db}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  POSTGRES_USER: ${POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgresql}
+  POSTGRES_DB: ${POSTGRES_DB:-Jora}
+
+services:
+  frontend:
+    image: ${IMAGE_FRONTEND:-ghcr.io/n57uctf/jora-frontend:main}
+    build: ./app-front/
+    volumes:
+      - ./app-front:/app-front
+    ports:
+      - 8092:80
+    restart: always
+    healthcheck:
+      << : *healthcheck
+      test: wget -O/dev/null http://localhost/
+    depends_on:
+      backend:
+        condition: service_started
+
+  backend:
+    image: ${IMAGE_BACKEND:-ghcr.io/n57uctf/jora-backend:main}
+    build: .
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+    expose:
+      - 8000
+    restart: always
+    environment:
+      << : *psqlenv
+      JWT_KEY: 0db120c4bfd93e453dea115cd9079d709f452adee19e9600eedb0953d599e1b1
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres
+    restart: always
+    expose:
+      - ${POSTGRES_PORT:-5432}
+    environment:
+      << : *psqlenv
+    healthcheck:
+      << : *healthcheck
+      test: pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-Jora}

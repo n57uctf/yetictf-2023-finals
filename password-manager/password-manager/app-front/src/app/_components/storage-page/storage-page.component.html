@@ -1,0 +1,47 @@
+<div class="page">
+    <mat-card>
+        <mat-card-subtitle><h2>Профиль</h2></mat-card-subtitle>
+        <mat-divider inset></mat-divider>
+        <mat-card-content *ngIf="user">
+            <mat-grid-list [cols]="15" [rowHeight]="40">
+                <mat-grid-tile [colspan]="7">Имя пользователя: <i>{{ user.username }}</i></mat-grid-tile>
+                <mat-grid-tile [colspan]="7">Мастер-пароль: <i>{{ user.masterpass }}</i></mat-grid-tile>
+                <mat-grid-tile [colspan]="1"><button mat-icon-button color="accent" (click)="logout()"><mat-icon>logout</mat-icon></button></mat-grid-tile>
+            </mat-grid-list>
+        </mat-card-content>
+    </mat-card>
+    <mat-card>
+        <mat-card-subtitle><h2>Добавить пароль</h2></mat-card-subtitle>
+        <mat-divider inset></mat-divider>
+        <mat-card-content *ngIf="storage">
+            <mat-grid-list [cols]="7" [rowHeight]="100">
+                <mat-grid-tile [colspan]="3">
+                    <mat-form-field appearance="fill">
+                        <mat-label>Название</mat-label>
+                        <input matInput #_title>
+                    </mat-form-field>
+                </mat-grid-tile>
+                <mat-grid-tile [colspan]="3">
+                    <mat-form-field appearance="fill">
+                        <mat-label>Пароль</mat-label>
+                        <input matInput #_password>
+                    </mat-form-field>
+                </mat-grid-tile>
+                <mat-grid-tile [colspan]="1">
+                    <div class="add-button"><button mat-flat-button color="accent" class="add-button" (click)="addNewPassword(_title.value, _password.value)">Сохранить</button></div>
+                </mat-grid-tile>
+            </mat-grid-list>
+        </mat-card-content>
+    </mat-card>
+    <mat-card>
+        <mat-card-subtitle><h2>Мои пароли</h2></mat-card-subtitle>
+        <mat-divider inset></mat-divider>
+        <mat-card-content *ngIf="storage">
+            <mat-grid-list [cols]="15" [rowHeight]="40" *ngFor="let pass of storage">
+                <mat-grid-tile [colspan]="7">{{ pass.title }}</mat-grid-tile>
+                <mat-grid-tile [colspan]="7">{{ pass.password }}</mat-grid-tile>
+                <mat-grid-tile [colspan]="1"><button mat-icon-button color="accent" (click)="sharePassword(pass.record_id)"><mat-icon>share</mat-icon></button></mat-grid-tile>
+            </mat-grid-list>
+        </mat-card-content>
+    </mat-card>
+</div>

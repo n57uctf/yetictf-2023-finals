@@ -1,0 +1,19 @@
+<div class="page">
+    <h2>Выгрузить зашифрованный бэкап</h2>
+    <h4>Выгрузка требается в том случае если вы забыли пароль от своего аккаунта, расшифровать можно с использованием мастер-пароля</h4>
+    <mat-form-field appearance="fill">
+        <mat-label>Ваш логин</mat-label>
+        <input matInput #_username>
+    </mat-form-field>
+    <button mat-stroked-button (click)="getBackup(_username.value)">Получить ссылку</button>
+    <h2>Для расшифровки бэкапа приложите файл бэкапа и мастер пароль</h2>
+    <mat-form-field appearance="fill">
+        <mat-label>Мастер-пароль</mat-label>
+        <input matInput #_master_password>
+    </mat-form-field>
+    <input type="file" #_backup>
+    <button mat-stroked-button (click)="decryptBackup(_master_password.value, _backup.files[0])">Расшифровать</button>
+    <p *ngIf="decrypted">
+        {{ decrypted }}
+    </p>
+</div>

@@ -1,0 +1,67 @@
+<div class="page">
+  <h1>Username: {{user.username}}<br>Info: {{user.info}}</h1>
+  <mat-accordion multi>
+
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Create new project
+        </mat-panel-title>
+        <mat-panel-description></mat-panel-description>
+      </mat-expansion-panel-header>
+      <div class="Form">
+        <mat-form-field appearance="fill">
+          <mat-label>Name</mat-label>
+          <input matInput placeholder="Project Name" #_name>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Description</mat-label>
+          <input matInput placeholder="Project Description" #_desc>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Participants</mat-label>
+          <input matInput placeholder="Participants usernames (example: ivan, katya, igor)" #_users>
+        </mat-form-field>
+      </div>
+        <button mat-flat-button color="primary" type="button" (click)="addProject(_users.value.split(', '), _name.value, _desc.value); _name.value=''; _desc.value=''; _users.value=''">Create ptoject</button>
+    </mat-expansion-panel>
+
+
+    <mat-expansion-panel 
+      *ngFor="let project_data of projects_data">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          {{ project_data.name }}
+        </mat-panel-title>
+        <mat-panel-description>
+          {{ project_data.description }}
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <mat-grid-list cols="15" rowHeight="50px"> 
+        <mat-grid-tile colspan=1 rowspan=1 [style.background]="'#7c84ff'">#</mat-grid-tile>
+        <mat-grid-tile colspan=3 rowspan=1 [style.background]="'#7c84ff'">Name</mat-grid-tile>
+        <mat-grid-tile colspan=4 rowspan=1 [style.background]="'#7c84ff'">Description</mat-grid-tile>
+        <mat-grid-tile colspan=3 rowspan=1 [style.background]="'#7c84ff'">Attachments</mat-grid-tile>
+        <mat-grid-tile colspan=2 rowspan=1 [style.background]="'#7c84ff'">Add attach</mat-grid-tile>
+        <mat-grid-tile colspan=2 rowspan=1 [style.background]="'#7c84ff'">Responsible</mat-grid-tile>
+      </mat-grid-list>
+      <mat-grid-list cols="15" rowHeight="50px" *ngFor="let task of project_data.tasks; index as i">
+        <mat-grid-tile colspan=1 rowspan=1 [style.background]="'#d1ccff'">{{ i+1 }}</mat-grid-tile>
+        <mat-grid-tile colspan=3 rowspan=1 [style.background]="'#d1ccff'">{{ task.name }}</mat-grid-tile>
+        <mat-grid-tile colspan=4 rowspan=1 [style.background]="'#d1ccff'">{{ task.description }}</mat-grid-tile>
+        <mat-grid-tile colspan=3 rowspan=1 [style.background]="'#d1ccff'">
+          <button mat-button (click)="getAttach(task.attachments[0])">{{ task.attachments }}</button>
+        </mat-grid-tile>
+        <mat-grid-tile colspan=2 rowspan=1 [style.background]="'#d1ccff'">
+          <input type="file" (change)="onFileSelected(task.task_id, $event)">        
+        </mat-grid-tile>
+        <mat-grid-tile colspan=2 rowspan=1 [style.background]="'#d1ccff'">{{ task.responsible }}</mat-grid-tile>
+      </mat-grid-list>
+      <div class="button-group">
+        <button mat-flat-button color="primary" type="button" (click)="openDialog(project_data.project_id)">Add Task</button>
+        <button mat-flat-button color="primary" type="button" *ngIf="project_data.creator" (click)="getFile(project_data.project_id)">Download Report</button>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+</div>
