@@ -29,4 +29,4 @@ services:
         condition: service_healthy
     restart: always
     ports:
-      - "8000:15400"
+      - "1111:15400"

@@ -9,7 +9,7 @@ import random
 from typing import NamedTuple, Dict
 from enum import Enum
 
-PORT = 8080
+PORT = 4444
 
 
 class Status(Enum):
