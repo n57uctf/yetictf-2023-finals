@@ -170,10 +170,10 @@ def push(args: PushArgs) -> CheckerResult:
     login = get_random_name()
     passwordik = get_random_password(16)
     try:
-        r1 = requests.post(f'http://{args.host}:8000/register',
+        r1 = requests.post(f'http://{args.host}:{PORT}/register',
                            data={'inputName': login, 'inputPassword': passwordik, 'inputConfirmPassword': passwordik},
                            allow_redirects=False)
-        r2 = requests.post(f'http://{args.host}:8000/login', data={'inputName': login, 'inputPassword': passwordik},
+        r2 = requests.post(f'http://{args.host}:{PORT}/login', data={'inputName': login, 'inputPassword': passwordik},
                            allow_redirects=False)
     except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
         return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
@@ -189,7 +189,7 @@ def push(args: PushArgs) -> CheckerResult:
 
     if place == 0:
         try:
-            r3 = requests.post(f'http://{args.host}:8000/user', cookies={'Cookies': r2.cookies['Cookies']},
+            r3 = requests.post(f'http://{args.host}:{PORT}/user', cookies={'Cookies': r2.cookies['Cookies']},
                                data={'inputPrivatbio': args.flag})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
@@ -204,7 +204,7 @@ def push(args: PushArgs) -> CheckerResult:
                              public_info='PUSH works')
     else:
         try:
-            r3 = requests.post(f'http://{args.host}:8000/', cookies={'Cookies': r2.cookies['Cookies']},
+            r3 = requests.post(f'http://{args.host}:{PORT}/', cookies={'Cookies': r2.cookies['Cookies']},
                                data={'isPublic': False, 'groupName': get_random_string(),
                                      'groupDescription': get_random_string()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
@@ -214,7 +214,7 @@ def push(args: PushArgs) -> CheckerResult:
                                  public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         group_id = re.findall(r'/group/quit/[0-9]+', r3.text)[0][12:]
         try:
-            r4 = requests.post(f'http://{args.host}:8000/group/{group_id}', cookies={'Cookies': r2.cookies['Cookies']},
+            r4 = requests.post(f'http://{args.host}:{PORT}/group/{group_id}', cookies={'Cookies': r2.cookies['Cookies']},
                                data={'threadName': get_random_string(), 'threadDescription': get_random_string()})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
@@ -223,7 +223,7 @@ def push(args: PushArgs) -> CheckerResult:
                                  public_info=f'PUSH {Status.MUMBLE.value} {r4.url} - {r4.status_code}')
         thread_id = re.findall(r'/thread/[0-9]+', r4.text)[0][8:]
         try:
-            r5 = requests.post(f'http://{args.host}:8000/thread/{thread_id}', cookies={'Cookies': r2.cookies['Cookies']},
+            r5 = requests.post(f'http://{args.host}:{PORT}/thread/{thread_id}', cookies={'Cookies': r2.cookies['Cookies']},
                                data={'addComment': args.flag})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
@@ -242,7 +242,7 @@ def pull(args: PullArgs) -> CheckerResult:
     private_info = json.loads(base64.b64decode(args.private_info).decode())
     if private_info['place'] == 0:
         try:
-            r1 = requests.get(f'http://{args.host}:8000/user', cookies={'Cookies': private_info['Cookies']})
+            r1 = requests.get(f'http://{args.host}:{PORT}/user', cookies={'Cookies': private_info['Cookies']})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
         if r1.status_code != 200:
@@ -254,7 +254,7 @@ def pull(args: PullArgs) -> CheckerResult:
         return CheckerResult(status=Status.OK.value, private_info=private_info, public_info='PULL works')
     else:
         try:
-            r1 = requests.get(f'http://{args.host}:8000/thread/{private_info["thread_id"]}',
+            r1 = requests.get(f'http://{args.host}:{PORT}/thread/{private_info["thread_id"]}',
                               cookies={'Cookies': private_info['Cookies']})
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
             return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
