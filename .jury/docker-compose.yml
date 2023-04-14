@@ -1,0 +1,153 @@
+version: "3.9"
+
+x-debug:
+  &debugenv
+  LOGLEVEL: DEBUG
+
+x-healthcheck: 
+  &healthcheck
+  test: curl -f http://localhost/
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 30s
+
+x-psqlenv: 
+  &psqlenv
+  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  POSTGRES_USER: ${POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+  POSTGRES_DB: ${POSTGRES_DB:-tanuki-jury}
+
+x-amqpenv: 
+  &amqpenv
+  AMQP_URL: ${AMQP_URL:-amqp://rmuser:rmpassword@rabbitmq:5672/}
+
+x-defaults: &defaults
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:15.2
+    restart: unless-stopped
+    environment: 
+      << : *psqlenv
+      PGDATA: ${PGDATA:-/var/lib/postgresql/data/pgdata}
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - ./pgdata:${PGDATA:-/var/lib/postgresql/data/pgdata}
+    expose:
+      - ${POSTGRES_PORT:-5432}
+    healthcheck:
+      << : *healthcheck
+      test: pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-tanuki-jury}
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    hostname: ${RABBITMQ_HOST:-rabbitmq}
+    restart: unless-stopped
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    ports:
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-rmuser}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-rmpassword}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: $RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
+    healthcheck:
+      << : *healthcheck
+      test: rabbitmq-diagnostics -q ping
+      start_period: 10s
+
+  core:
+    image: ghcr.io/n57uctf/core:dev
+    restart: unless-stopped
+    environment: 
+      << : [*psqlenv, *amqpenv, *debugenv]
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - ${CONFIG_JSON:-"./config.json"}:/code/config.json
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  reciver:
+    image: ghcr.io/n57uctf/reciver:dev
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    ports:
+      - 8080:80
+    << : *defaults
+    environment:
+      << : *amqpenv
+    healthcheck:
+      << : *healthcheck
+      test: curl -f http://localhost/check
+      start_period: 15s
+
+  master:
+    image: ghcr.io/n57uctf/master:dev
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    << : *defaults
+    environment:
+      << : [*amqpenv, *debugenv]
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.checkers
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - ./checkers:/code/checkers
+    << : *defaults
+    environment:
+      << : [*amqpenv, *debugenv]
+
+  dashboard-backend:
+    image: ghcr.io/n57uctf/dashboard-backend:dev
+    << : *defaults
+    environment:
+      << : *amqpenv
+
+  admin-backend:
+    image: ghcr.io/n57uctf/admin-backend:dev
+    << : *defaults
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      << : *amqpenv
+      AUTH_KEY: ${AUTH_KEY:-supersecret}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-tanuki}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-tanuki}
+
+  admin-frontend:
+    image: ghcr.io/n57uctf/admin-frontend:dev
+    restart: unless-stopped
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    ports:
+      - 8000:80
+    depends_on: [admin-backend]
+
+  dashboard-frontend:
+    image: ghcr.io/n57uctf/dashboard-frontend:dev
+    restart: unless-stopped
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    ports:
+      - 80:80
+    depends_on: [dashboard-backend]

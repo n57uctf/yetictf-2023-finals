@@ -235,6 +235,7 @@ def push(args: PushArgs) -> CheckerResult:
     # Get Projects data
     try:
         r = requests.get(f'{url}/open_projects', headers=auth_header)
+        print(auth_header)
         print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -430,7 +431,7 @@ def pull(args: PullArgs) -> CheckerResult:
     # Check Flag
     try:
         if flag_place["flag_place"]:
-            query = f'{url}/open_projects'  # f'{url}/create_report?project_id={flag_place["private"]}'
+            query = f'{url}/create_report?project_id={flag_place["private"]}'
         else:
             query = f'{url}/download?filename={flag_place["private"]}'
         r = requests.get(query, headers=auth_header)
@@ -439,22 +440,16 @@ def pull(args: PullArgs) -> CheckerResult:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
                                  public_info=f'PULL {Status.MUMBLE.value} can not get flag: {r.url}, content: {r.text}')
-        print("data", data)
-        project_data = ''
+        print("data", r.text)
         if flag_place["flag_place"]:
-            for i in range(len(json.loads(r.text))):
-                if json.loads(r.text)[i]["project_id"] == flag_place["private"]:
-                    project_data = json.loads(r.text)[i]
-            if project_data:
-                if args.flag not in project_data["description"]:
-                    return CheckerResult(status=Status.CORRUPT.value,
-                                         private_info=str(args.private_info),
-                                         public_info=f'PULL {Status.CORRUPT.value} Flags do not match: {r.url}, content: {r.text}')
-                data = get_json(r)
-            else:
+            project_data = r.text
+            print("proj", project_data)
+            project_data = project_data[0][project_data[0].find('description=') + 13:project_data[0].find('creator=') - 2]
+            print("proj", project_data)
+            if args.flag not in project_data:
                 return CheckerResult(status=Status.CORRUPT.value,
-                                             private_info=str(args.private_info),
-                                             public_info=f'PULL {Status.CORRUPT.value} no such project found: {r.url}, content: {r.text}')
+                                    private_info=str(args.private_info),
+                                    public_info=f'PULL {Status.CORRUPT.value} Flags do not match: {r.url}, content: {r.text}')
         else:
             if args.flag not in r.text:
                 return CheckerResult(status=Status.CORRUPT.value,
@@ -489,7 +484,7 @@ if __name__ == '__main__':
     except SystemError as e:
         raise
     except Exception as e:
-        result = CheckerResult(status=Status.ERROR.value, private_info='', public_info=e)
+        result = CheckerResult(status=Status.ERROR.value, private_info='', public_info=str(e))
     if result.status != Status.OK.value:
         print(result.public_info, file = sys.stderr)
     print(result.private_info)

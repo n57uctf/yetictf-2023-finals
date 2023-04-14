@@ -23,7 +23,7 @@ services:
     volumes:
       - ./app-front:/app-front
     ports:
-      - 8092:80
+      - 2222:80
     restart: always
     healthcheck:
       << : *healthcheck

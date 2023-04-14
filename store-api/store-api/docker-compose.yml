@@ -59,7 +59,7 @@ services:
       django:
         condition: service_started
     ports:
-      - "8080:8080"
+      - "4444:8080"
     volumes:
       - ./static/:/static
     restart: always

@@ -8,22 +8,18 @@ on:
       - '.vulnbox/**'
       - '.github/workflows/packer.yml'
   workflow_call:
-  pull_request:
-    branches:
-      - main
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */2 * * *'
 
 env:
   PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
 
 jobs:
-  build:
+  vagrant:
+    outputs:
+      vm_name: ${{ steps.vm-details.outputs.vm_name }}
+      ssh_port: ${{ steps.vm-details.outputs.ssh_port }}
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
-    env:
-      PKR_VAR_username: yeti
-      PKR_VAR_password: YetiCTF2023 # TODO: Fix hardcode password pls
-    name: Build VM
     steps:
       - name: Check build environment
         run: |
@@ -34,9 +30,6 @@ jobs:
           packer -h > /dev/null
           vboxmanage > /dev/null
 
-      - name: Checkout
-        uses: actions/checkout@v3
-
       - name: Cache Vagrant boxes
         uses: actions/cache@v2
         with:
@@ -45,13 +38,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-vagrant-
 
+      - run: vagrant validate
+        working-directory: ./.vulnbox/
+
       - name: Check vagrant environment
         run: |
           vagrant version
-          vagrant global-status
-
-      - run: vagrant validate
-        working-directory: ./.vulnbox/
+          vagrant global-status --prune
 
       - run: vagrant up --no-provision
         working-directory: ./.vulnbox/
@@ -76,20 +69,38 @@ jobs:
       - name: Check virtualbox machine settings
         run: vboxmanage showvminfo ${{ steps.vm-details.outputs.vm_name }}
 
-      - name: packer init & validate
-        run: |
-          packer init .
-          packer validate .
+      - run: vagrant halt -f && vagrant destroy -f
+        if: ${{ failure() }}
+        working-directory: ./.vulnbox/
+
+      - run: rm -rf .vagrant
+        if: ${{ failure() }}
+        working-directory: ./.vulnbox/
+      
+      - name: Delete all vulnbox_default VMs
+        run: vboxmanage list vms | grep "vulnbox_default_" | awk -F" " '{print $1}' | xargs -I {} vboxmanage unregistervm --delete {}
+        if: ${{ failure() }} 
+        working-directory: ./.vulnbox/
+
+
+  packer:
+    needs: vagrant
+    runs-on: [self-hosted, linux, X64, vbox, vagrant]
+    env:
+      PKR_VAR_username: yeti
+      PKR_VAR_password: YetiCTF2023 # TODO: Fix hardcode password pls
+    steps:
+      - run: packer init . && packer validate .
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
-          PKR_VAR_vagrantbox: ${{ steps.vm-details.outputs.vm_name }}
-          PKR_VAR_port: ${{ steps.vm-details.outputs.ssh_port }}
+          PKR_VAR_vagrantbox: ${{ needs.vagrant.outputs.vm_name }}
+          PKR_VAR_port: ${{ needs.vagrant.outputs.ssh_port }}
         working-directory: ./.vulnbox/
 
       - run: packer build .
         env:
-          PKR_VAR_vagrantbox: ${{ steps.vm-details.outputs.vm_name }}
-          PKR_VAR_port: ${{ steps.vm-details.outputs.ssh_port }}
+          PKR_VAR_vagrantbox: ${{ needs.vagrant.outputs.vm_name }}
+          PKR_VAR_port: ${{ needs.vagrant.outputs.ssh_port }}
         working-directory: ./.vulnbox/
 
       - run: vagrant halt -f && vagrant destroy -f
@@ -99,10 +110,15 @@ jobs:
       - run: rm -rf .vagrant
         if: ${{ always() }}
         working-directory: ./.vulnbox/
-  
+      
+      - name: Delete all vulnbox_default VMs
+        run: vboxmanage list vms | grep "vulnbox_default_" | awk -F" " '{print $1}' | xargs -I {} vboxmanage unregistervm --delete {}
+        if: ${{ always() }} 
+        working-directory: ./.vulnbox/
+
   push:
-    needs: build
-    if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event.action == 'schedule' || github.event_name == 'workflow_dispatch'  }}
+    needs: packer
+    if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  }}
     name: Push VM to s3
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     env:
@@ -116,11 +132,11 @@ jobs:
         run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: ZIP w\ password
-        run: zip -e -P $ZIP_PASSWORD ${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip ${PKR_VAR_event}.ova
+        run: zip -e -P $ZIP_PASSWORD ${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.PKR_VAR_event }}.ova
         working-directory: ./.vulnbox/output-vulnbox/
 
       - name: Put to Yandex Object storage
-        run: aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${PKR_VAR_event}_${{ steps.today.outputs.today }}.ova.zip
+        run: aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip
         working-directory: ./.vulnbox/output-vulnbox/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}

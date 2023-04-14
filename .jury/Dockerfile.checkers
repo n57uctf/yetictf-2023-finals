@@ -1,0 +1,3 @@
+FROM ghcr.io/n57uctf/worker:dev
+COPY checkers/* /code/checkers/
+RUN pip install --no-cache-dir --upgrade -r /code/checkers/all-requirements.txt 

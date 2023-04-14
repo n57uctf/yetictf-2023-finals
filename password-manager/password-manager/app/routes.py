@@ -1,6 +1,6 @@
 import hashlib
 from typing import List
-from io import StringIO
+from io import BytesIO
 import random
 import string
 import ctypes
@@ -129,8 +129,8 @@ async def decrypt(
         storage: ExportStorage = Depends(ExportStorage)
 ):
     # key = storage.key_gen(data.master_password)
-    decrypt_data = storage.encrypt(data.data, data.master_password)
-    return DecryptedDataModel(data=decrypt_data)
+    decrypt_data = storage.encrypt(data.data.encode('UTF-8'), data.master_password.encode('UTF-8'))
+    return DecryptedDataModel(data=str(decrypt_data))
 
 
 @router.get("/file")
@@ -141,12 +141,9 @@ async def download_file(
     username = link.split("/").pop()
     data_to_export = storage.create_export(username)
     master_password = storage.get_master_password(username)
-    text = "Наш сервис “PasswordManager” предназначен для хранения ваших паролей в защищенном месте. \nОчень жаль, что " \
-           "вы забыли свой пароль, но как видите выгрузить свое хранилище очень легко и без пароля, нужен лишь " \
-           "мастер пароль для расшифровки. \nВы можете заново пройти регистрацию и добавить эти пароли в новое " \
-           "хранилище, чтобы вам было удобнее.\n\n"
+    text = """Data format: {"password":<user-password>, "title":<service-title>}{<next record>}"""
     value = "\n".join(': '.join(password_title) for password_title in data_to_export)
     # key = storage.key_gen(master_password[0])
     key = master_password[0]
-    buf = StringIO(storage.encrypt(text+value, key))
+    buf = BytesIO(storage.encrypt((text+value).encode('UTF-8'), key.encode('UTF-8')))
     return StreamingResponse(buf, media_type="application/octet-stream")

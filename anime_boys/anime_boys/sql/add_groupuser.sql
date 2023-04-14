@@ -1,0 +1,1 @@
+INSERT INTO groupuser (user_, group_) VALUES(%(user_id)s, %(group_id)s)

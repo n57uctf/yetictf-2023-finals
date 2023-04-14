@@ -1,0 +1,95 @@
+<html>
+   <head>
+      <title>Profile</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+      <style>
+         .personal-area{
+         background-repeat: no-repeat;
+         display: flex;
+         justify-content: center;
+         background-size: cover;
+         margin-top:100px;
+         }
+         .ava{
+         background-repeat: no-repeat;
+         justify-content: center;
+         background-size: cover;
+         display: flex;
+         }
+         .vertical-center {
+         margin: 10px;
+         }
+         #bio {
+           /* Set a fixed height for the paragraph */
+           height: 100px;
+
+           /* Allow overflow content to be scrolled */
+           overflow-y: scroll;
+         }
+      </style>
+<!--      <script>-->
+<!--                function editProfile()-->
+<!--                {-->
+<!--                    if (document.getElementById("edit-form").style.display == "")-->
+<!--                    {-->
+<!--                        document.getElementById("edit-form").style.display = "none";-->
+<!--                    }-->
+<!--                    else-->
+<!--                    {-->
+<!--                        document.getElementById("edit-form").style.display = "";-->
+<!--                    }-->
+<!--                }-->
+<!--      </script>-->
+   </head>
+   <body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+      <div class="container">
+         <div class="row vertical-center ">
+            <div class="col-10">
+               <h1><a href="https://shikimori.one/animes/z31240-re-zero-kara-hajimeru-isekai-seikatsu"><img src="data:image/png;base64,{{ byte_arr | safe}}"  width="130" height="130"></a>
+                  {{username}} - {% if isVipProfile %} VIP Account {% else %} Simple account {% endif %}
+               </h1>
+            </div>
+            <!-- Login and register buttons -->
+            <div class="col-2 text-center">
+                <a href="/user">{{nickname}}</a>
+               <a class="btn btn-danger mr-n2 vertical-center" href="/logout">Logout</a>
+            </div>
+         </div>
+      </div>
+      <div class="container">
+         <div class="row">
+            <div class="col-12">
+               <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                  </button>
+                  <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+                           <a class="btn btn-secondary vertical-center" href="/">Back To Forum</a>
+                        </li>
+                        <!-- Add more categories as needed -->
+                     </ul>
+                  </div>
+               </nav>
+            </div>
+         </div>
+      </div>
+      <div class="container personal-area">
+		<div id="profile-card" class="container">
+		  <div class="row">
+			<div class="col-md-6 offset-md-3">
+			  <div class="card p-3" style="border-color: #964B00;">
+				<div class="mb-3">
+				  <label for="bio" class="form-label">Bio:</label>
+				  <p id="bio" name="bio" class="form-control" rows="4">{% if user.publicinfo %}{{user.publicinfo}}{% else %} No info to provide! {% endif %}</p>
+				</div>
+			  </div>
+			</div>
+		  </div>
+		</div>
+      </div>
+   </body>
+</html>

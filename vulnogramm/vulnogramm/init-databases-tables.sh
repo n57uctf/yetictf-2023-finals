@@ -12,10 +12,9 @@ CREATE TABLE IF NOT EXISTS "Post"
 
 CREATE TABLE IF NOT EXISTS "User"
 (
-	"Id" integer NOT NULL,
+	"Id" serial PRIMARY KEY,
 	"Login" text NOT NULL,
 	"Password" text NOT NULL,
-	CONSTRAINT "PK_User" PRIMARY KEY ("Id"),
 	CONSTRAINT "User_Login_key" UNIQUE ("Login")
 );
 EOSQL

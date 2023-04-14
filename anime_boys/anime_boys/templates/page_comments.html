@@ -1,0 +1,119 @@
+<html>
+   <head>
+      <title>Anime Boys Forum</title>
+      <!-- Link to Bootstrap CDN -->
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+      <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+      <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+      <style>
+         .vertical-center {
+         margin: 10px;
+         }
+         .center-v {
+         display: flex;
+         align-items: center;
+         }
+         .btn {
+         padding: .375rem -75rem;
+         }
+      </style>
+   </head>
+   <body>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+      <div class="container">
+         <!-- Header with logo and title -->
+         <div class="row vertical-center ">
+            <div class="col-10">
+               <h1><a href="https://shikimori.one/animes/z31240-re-zero-kara-hajimeru-isekai-seikatsu"><img src="https://i.pinimg.com/736x/6a/d3/84/6ad38464949bf98045ece55af6cd146f.jpg"  alt="Anime Boys Forum Logo" width="132" height="174" class="img-fluid"></a>
+                  Anime Boys Forum
+               </h1>
+            </div>
+            <div class="col-2 text-center">
+               <a href="/user">{{username}}</a>
+               <a class="btn btn-danger mr-n2 vertical-center" href="/logout">Logout</a>
+            </div>
+         </div>
+         <!-- Navigation bar with links to categories -->
+         <div class="row">
+            <div class="col-12">
+               <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                  </button>
+                  <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+                           <a class="btn vertical-center" style="background-color: #964B00; color: white;" href="/">На главную</a>
+                        </li>
+                        <li class="nav-item">
+                           <a class="btn vertical-center" style="background-color: #964B00; color: white;" href="/group/{{thread.group_id}}">Назад в группу</a>
+                        </li>
+                        <!-- Add more categories as needed -->
+                     </ul>
+                  </div>
+               </nav>
+            </div>
+         </div>
+         <div class="card mb-4 mt-4">
+            <div class="card-header">
+               <h5 class="card-title">
+                  <a>{{thread.name}}</a>
+               </h5>
+            </div>
+            <div class="card-body">
+               <p class="card-text">{{thread.description}}</p>
+            </div>
+            <div class="card-footer">
+               <small class="text-muted d-flex w-100 justify-content-between">{% if comments %}Сообщений в треде: {{comments|length}}{% else %} Сообщений еще нет! {% endif %}</small>
+            </div>
+         </div>
+
+
+         <!-- Добавление комментария -->
+         <div class="list-group mb-2">
+            <div class="card shadow-sm p-3 mb-4" style="border-color: #964B00;">
+               <form action="/thread/{{thread_id}}" method="post" id="add-comment">
+                  <div class="mb-3">
+                     <label for="make-comment" class="form-label">Комментарий</label>
+                     <textarea class="form-control" class="d-flex justify-content" id="make-comment" name="addComment" required rows="2"></textarea>
+                  </div>
+                   <div class="d-grid gap-2">
+                      <button type="submit" class="btn" style="background-color: #964B00; color: white;">Отправить</button>
+                  </div>
+               </form>
+            </div>
+         </div>
+
+         {% if comments %}
+         {% for comment in comments | reverse %}
+         <div class="card mb-4">
+            <div class="card-header">
+               <div class="container">
+                  <div class="row">
+                     <div class="col-0">
+                        <a href="https://shikimori.me/animes/z20785-mahouka-koukou-no-rettousei"><img width="70" height="70" src="data:image/png;base64,{{ comment.img | safe}}"></a>
+                     </div>
+                     <div style="margin-top:7px;" class="col-4">
+                        <h5 class="card-title">
+                           <a href="/user/{{comment.user_id}}" class="text-dark">{{comment.name}}</a>
+                        </h5>
+                        <p  class="card-text">
+                           <small class="text-muted">Время отправки: {{comment.time}}
+                           {% if comment.isvip %}<span style="background-color: #d9af1a;" class="badge badge-pill badge-info ml-2"> VIP User </span></small>
+                        </p>
+                        {% else %}
+                        <span class="badge badge-pill badge-info ml-2"> User</span></small></p>
+                        {% endif %}
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="card-body">
+               <p class="card-text">{{comment.text}}</p>
+            </div>
+         </div>
+         {% endfor %}
+         {% endif %}
+      </div>
+   </body>
+</html>

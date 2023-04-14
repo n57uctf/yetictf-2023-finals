@@ -82,7 +82,6 @@ async def create_task(
     created_task_data = new_task.create_task(new_task_data.name, new_task_data.description, project_id, jwt["username"],
                                              new_task_data.responsible)   # , [file.filename])
     if created_task_data:
-        print(dict(created_task_data))
         return TaskModel(**created_task_data)
     else:
         raise HTTPException(400)
@@ -123,7 +122,6 @@ async def download(
         jwt: JWTBearerAccess = Depends(JWTBearerAccess())
 ):
     res = glob.glob(f'static/{filename}')
-    print(res)
     if res:
         return FileResponse(res[0], filename=filename, media_type="application/octet-stream")
     raise HTTPException(404)
