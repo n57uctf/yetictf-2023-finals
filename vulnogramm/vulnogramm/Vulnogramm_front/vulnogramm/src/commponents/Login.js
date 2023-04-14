@@ -1,11 +1,11 @@
 import React, {useState} from "react";
-import axios from "axios";
+import axios from 'axios';
 import PropTypes from 'prop-types';
 
 
 
 async function loginUser(credentials) {
-    return fetch('https://localhost:7180/authentication', {
+    return fetch(`${window.location.origin}/backend/authentication`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -15,6 +15,7 @@ async function loginUser(credentials) {
     })
       .then(data => data.json());
 }
+
 export default function Login({setToken}){
 
     const [login, setLogin] = useState();
@@ -38,7 +39,15 @@ export default function Login({setToken}){
         setToken(myObject);
     }
     
-   
+    function registrate()
+    {
+        const url = `${window.location.origin}/backend/adduser`;
+        return axios.post(url,{
+            login,
+            password
+        }).then(response => console.log(response.status));
+    }
+
     
 
     return (

@@ -3,11 +3,12 @@ import { saveAs} from 'file-saver';
 import Validate from './Validate';
 
 async function showPost(credentials) {
-    return fetch('https://localhost:7180/yourpost', {
+    return fetch(`${window.location.origin}/backend/yourpost`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${JSON.parse(localStorage.getItem('jwt'))['access_token']}`
         },
         body: JSON.stringify(credentials)
     })
