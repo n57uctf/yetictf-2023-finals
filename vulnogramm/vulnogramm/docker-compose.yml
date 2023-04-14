@@ -48,4 +48,4 @@ services:
       - 5555:3000
     depends_on:
       web:
-        service_started
+        condition: service_started
