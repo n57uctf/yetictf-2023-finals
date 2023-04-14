@@ -109,7 +109,7 @@ services:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-      - ./worker/checkers:/code/checkers
+      - ./checkers:/code/checkers
     << : *defaults
     environment:
       << : [*amqpenv, *debugenv]
