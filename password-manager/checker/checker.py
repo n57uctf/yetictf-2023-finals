@@ -246,8 +246,24 @@ def push(args: PushArgs) -> CheckerResult:
                             private_info=str(e),
                             public_info=f'PUSH {Status.MUMBLE.value} can not create share link: {r.url}, content: {r.text}')
 
+    # Get Storage data after add password
+    try:
+        r = requests.get(f'{url}/storage', headers=auth_header)
+        print(r.status_code, r.text)
+        if r.status_code != 200:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        data = get_json(r)
+        user_storage = r.text
+    except Exception as e:
+        return CheckerResult(status=Status.MUMBLE.value,
+                             private_info=str(e),
+                             public_info=f'PUSH {Status.MUMBLE.value} can not get storage data: {r.url}, content: {r.text}')
+
     # Download backup storage
     try:
+        # get export link
         r = requests.get(f'{url}/export?username={creds["username"]}')
         print("response", r.text)
         if r.status_code != 200:
@@ -255,6 +271,7 @@ def push(args: PushArgs) -> CheckerResult:
                                  private_info=f'{r.status_code}',
                                  public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
         data = get_json(r)
+        # get encrypted file data
         r = requests.get(f'{url}/file?link={data["link"]}')
         print("response-file", r.text)
         if r.status_code != 200:
@@ -262,12 +279,25 @@ def push(args: PushArgs) -> CheckerResult:
                                  private_info=f'{r.status_code}',
                                  public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
         print(master_password)
+        # get decrypted file data
         r = requests.post(f'{url}/decrypt', json={"master_password": master_password, "data": r.text})
         print("response-decrypt", r.json()["data"])
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
                                  public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        # check if decrypted data is decrypted
+        print("user-storage", user_storage)
+        data_storage = str(json.loads(user_storage)[0]["title"]) + ": " + str(json.loads(user_storage)[0]["password"])
+        print("data-storage", data_storage)
+        default_text = """b'Data format: {"password":<user-password>, "title":<service-title>}{<next record>}"""
+        decrypted = str(r.json()["data"]).replace(default_text, '')
+        print("decrypted", decrypted[:-1])
+        if decrypted[:-1] not in data_storage:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
@@ -281,10 +311,14 @@ def pull(args: PullArgs) -> CheckerResult:
                         private_info=str(args.private_info),
                         public_info='PULL works')
     url = f'http://{args.host}:{PORT}/api'
+    print(args.private_info)
+    print(args)
+    print(json.loads(args.private_info))
 
     # Login
     try:
         r = requests.post(f'{url}/login', json=json.loads(args.private_info))
+        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                 private_info=str(args.private_info),
@@ -298,7 +332,22 @@ def pull(args: PullArgs) -> CheckerResult:
                              private_info=str(e),
                              public_info=f'PULL {Status.MUMBLE.value} can not login: {r.url}, content: {r.text}')
 
-    # Check Flag
+    # Get Profile data
+    try:
+        r = requests.get(f'{url}/profile', headers=auth_header)
+        print(r.status_code, r.text)
+        if r.status_code != 200:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        data = get_json(r)
+        master_password = data["masterpass"]
+    except Exception as e:
+        return CheckerResult(status=Status.MUMBLE.value,
+                             private_info=str(e),
+                             public_info=f'PULL {Status.MUMBLE.value} can not get profile data: {r.url}, content: {r.text}')
+
+    # Check Flag in storage
     try:
         r = requests.get(f'{url}/storage', headers=auth_header)
         print(r.status_code, r.text)
@@ -307,6 +356,8 @@ def pull(args: PullArgs) -> CheckerResult:
                                  private_info=f'{r.status_code}',
                                  public_info=f'PULL {Status.MUMBLE.value} can not get flag: {r.url}, content: {r.text}')
         data = get_json(r)
+        print("data", data)
+        storage_id = str(json.loads(r.text)[0]["record_id"])
         if args.flag not in data[0]['password']:
             return CheckerResult(status=Status.CORRUPT.value,
                                  private_info=str(args.private_info),
@@ -315,6 +366,72 @@ def pull(args: PullArgs) -> CheckerResult:
         return CheckerResult(status=Status.MUMBLE.value,
                              private_info=str(e),
                              public_info=f'PULL {Status.MUMBLE.value} flags dont match: {r.url}, content: {r.text}')
+
+    # Check Flag in shared_link
+    try:
+        r = requests.get(f'{url}/share?record_id={storage_id}', headers=auth_header)
+        print(r.status_code, r.text)
+        print("response123", r.text)
+        if r.status_code != 200:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        # Check if link works
+        print("link", json.loads(r.text)["link"])
+        r = requests.get(f'{url}/shared_link?shared_password_link={json.loads(r.text)["link"]}')
+        print("response", r.text)
+        if r.status_code != 200:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        data = get_json(r)
+        print("data", data)
+        if args.flag not in data['password']:
+            return CheckerResult(status=Status.CORRUPT.value,
+                                 private_info=str(args.private_info),
+                                 public_info=f'PULL {Status.CORRUPT.value} Flags do not match: {r.url}, content: {r.text}')
+    except Exception as e:
+        return CheckerResult(status=Status.MUMBLE.value,
+                             private_info=str(e),
+                             public_info=f'PULL {Status.MUMBLE.value} flags dont match: {r.url}, content: {r.text}')
+
+    # Check flag in decrypted file
+    try:
+        # get export link
+        r = requests.get(f'{url}/export?username={json.loads(args.private_info)["username"]}')
+        print("response", r.text)
+        if r.status_code != 200:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        data = get_json(r)
+        # get encrypted file data
+        r = requests.get(f'{url}/file?link={data["link"]}')
+        print("response-file", r.text)
+        if r.status_code != 200:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        print(master_password)
+        # get decrypted file data
+        r = requests.post(f'{url}/decrypt', json={"master_password": master_password, "data": r.text})
+        print("response-decrypt", r.json()["data"])
+        if r.status_code != 200:
+            return CheckerResult(status=Status.MUMBLE.value,
+                                 private_info=f'{r.status_code}',
+                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+        # check if decrypted data is decrypted right
+        default_text = """b'Data format: {"password":<user-password>, "title":<service-title>}{<next record>}"""
+        decrypted = str(r.json()["data"]).replace(default_text, '')
+        print("decrypted", decrypted[decrypted.find(":")+1:-1])
+        if args.flag not in decrypted[decrypted.find(":")+1:-1]:
+            return CheckerResult(status=Status.CORRUPT.value,
+                                 private_info=str(args.private_info),
+                                 public_info=f'PULL {Status.CORRUPT.value} Flags do not match: {r.url}, content: {r.text}')
+    except Exception as e:
+        return CheckerResult(status=Status.MUMBLE.value,
+                            private_info=str(e),
+                            public_info=f'PULL {Status.MUMBLE.value} create backup not working: {r.url}, content: {r.text}')
     return res
 
 
@@ -339,7 +456,7 @@ if __name__ == '__main__':
     except SystemError as e:
         raise
     except Exception as e:
-        result = CheckerResult(status=Status.ERROR.value, private_info='', public_info=e)
+        result = CheckerResult(status=Status.ERROR.value, private_info='', public_info=str(e))
     if result.status != Status.OK.value:
         print(result.public_info, file = sys.stderr)
     print(result.private_info)
