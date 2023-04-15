@@ -157,7 +157,20 @@ jobs:
     
       - run: docker compose ps
         working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
-      
+      - name: docker compose down
+        run: docker compose down
+        env: 
+          IMAGE_BACKEND: ${{ steps.meta-backend.outputs.tags }}
+          IMAGE_FRONTEND: ${{ steps.meta-frontend.outputs.tags }}
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+        
+      - name: docker compose up
+        run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
+        env: 
+          IMAGE_BACKEND: ${{ steps.meta-backend.outputs.tags }}
+          IMAGE_FRONTEND: ${{ steps.meta-frontend.outputs.tags }}
+        working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+
       - name: Checker push
         id: checker-push
         run: |
