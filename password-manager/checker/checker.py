@@ -100,7 +100,7 @@ def get_json(response, validate_response=True):
     except:
         CheckerResult(status=Status.MUMBLE.value,
                       private_info=f'JSON validation error on url: {response.url}',
-                      public_info=f'JSON validation error on url: {response.url}, content: {response.text}')
+                      public_info=f'JSON validation error on url')
     if not validate_response:
         return data
     try:
@@ -109,11 +109,11 @@ def get_json(response, validate_response=True):
         else:
             CheckerResult(status=Status.MUMBLE.value,
                           private_info=f'Response status not success on url: {response.url}',
-                          public_info=f'Response status not success on url: {response.url}, content: {response.text}')
+                          public_info=f'Response status not success on url')
     except:
         CheckerResult(status=Status.MUMBLE.value,
                       private_info=f'Unknown response status ("success" field in response not found), url: {response.url}',
-                      public_info=f'Unknown response status ("success" field in response not found), url: {response.url}, content: {response.text}')
+                      public_info=f'Unknown response status ("success" field in response not found), url')
 
 
 def push(args: PushArgs) -> CheckerResult:
@@ -129,7 +129,7 @@ def push(args: PushArgs) -> CheckerResult:
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                 private_info=f'{r.status_code}',
-                                public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
     except Exception as e:
         return CheckerResult(status=Status.DOWN.value,
                             private_info=str(e),
@@ -149,86 +149,79 @@ def push(args: PushArgs) -> CheckerResult:
     # Get Users
     try:
         r = requests.get(f'{url}/get_users', headers={'User-Agent': rnd_agent()})
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PUSH {Status.MUMBLE.value} can not get users list: {r.url}, content: {r.text}')
+                            public_info=f'PUSH {Status.MUMBLE.value} can not get users list')
 
     # Register
     try:
         r = requests.post(f'{url}/register', json=creds, headers={'User-Agent': rnd_agent()})
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PUSH {Status.MUMBLE.value} can not register user: {r.url}, content: {r.text}')
+                            public_info=f'PUSH {Status.MUMBLE.value} can not register user')
 
     # Login
     try:
         r = requests.post(f'{url}/login', json=creds, headers={'User-Agent': rnd_agent()})
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
         token = data["token"]
-        print(token)
         auth_header = {'Authorization': f'Bearer {token}', 'User-Agent': rnd_agent()}
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PUSH {Status.MUMBLE.value} can not login: {r.url}, content: {r.text}')
+                            public_info=f'PUSH {Status.MUMBLE.value} can not login')
 
     # Get Profile data
     try:
         r = requests.get(f'{url}/profile', headers=auth_header)
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
         master_password = data["masterpass"]
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PUSH {Status.MUMBLE.value} can not get profile data: {r.url}, content: {r.text}')
+                            public_info=f'PUSH {Status.MUMBLE.value} can not get profile data')
 
     # Get Storage data
     try:
         r = requests.get(f'{url}/storage', headers=auth_header)
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PUSH {Status.MUMBLE.value} can not get storage data: {r.url}, content: {r.text}')
+                            public_info=f'PUSH {Status.MUMBLE.value} can not get storage data')
 
     # Add new password to storage
     try:
         r = requests.post(f'{url}/storage', headers=auth_header,
                           json={"password": args.flag, "title": get_random_service_name()})
-        print("response", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         if args.flag not in r.json()["password"] :
             return CheckerResult(status=Status.CORRUPT.value,
                                  private_info=f'{r.status_code}',
@@ -237,86 +230,76 @@ def push(args: PushArgs) -> CheckerResult:
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PUSH {Status.MUMBLE.value} can not add password to storage: {r.url}, content: {r.text}')
+                            public_info=f'PUSH {Status.MUMBLE.value} can not add password to storage')
 
     # Create share Link for password
     try:
         r = requests.get(f'{url}/share?record_id={data["record_id"]}', headers=auth_header)
-        print("response", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
         # Check if link works
         r = requests.get(f'{url}/shared_link?shared_password_link={data["link"]}', headers={'User-Agent': rnd_agent()})
-        print("response", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PUSH {Status.MUMBLE.value} can not create share link: {r.url}, content: {r.text}')
+                            public_info=f'PUSH {Status.MUMBLE.value} can not create share link')
 
     # Get Storage data after add password
     try:
         r = requests.get(f'{url}/storage', headers=auth_header)
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
         user_storage = r.text
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                              private_info=str(e),
-                             public_info=f'PUSH {Status.MUMBLE.value} can not get storage data: {r.url}, content: {r.text}')
+                             public_info=f'PUSH {Status.MUMBLE.value} can not get storage data')
 
     # Download backup storage
     try:
         # get export link
         r = requests.get(f'{url}/export?username={creds["username"]}', headers={'User-Agent': rnd_agent()})
-        print("response", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
         # get encrypted file data
         r = requests.get(f'{url}/file?link={data["link"]}', headers={'User-Agent': rnd_agent()})
-        print("response-file", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
-        print(master_password)
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         # get decrypted file data
         r = requests.post(f'{url}/decrypt', json={"master_password": master_password, "data": r.text}, headers={'User-Agent': rnd_agent()})
-        print("response-decrypt", r.json()["data"])
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
         # check if decrypted data is decrypted
-        print("user-storage", user_storage)
         data_storage = str(json.loads(user_storage)[0]["title"]) + ": " + str(json.loads(user_storage)[0]["password"])
-        print("data-storage", data_storage)
         default_text = """b'Data format: {"password":<user-password>, "title":<service-title>}{<next record>}"""
         decrypted = str(r.json()["data"]).replace(default_text, '')
-        print("decrypted", decrypted[:-1])
         if decrypted[:-1] not in data_storage:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PUSH {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PUSH {Status.MUMBLE.value} - {r.status_code}')
 
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PUSH {Status.MUMBLE.value} create backup not working: {r.url}, content: {r.text}')
+                            public_info=f'PUSH {Status.MUMBLE.value} create backup not working')
 
     return res
 
@@ -326,127 +309,109 @@ def pull(args: PullArgs) -> CheckerResult:
                         private_info=str(args.private_info),
                         public_info='PULL works')
     url = f'http://{args.host}:{PORT}/api'
-    print(args.private_info)
-    print(args)
-    print(json.loads(args.private_info))
 
     # Login
     try:
         r = requests.post(f'{url}/login', json=json.loads(args.private_info), headers={'User-Agent': rnd_agent()})
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                 private_info=str(args.private_info),
-                                public_info=f'PULL {Status.MUMBLE.value} can not login {r.url} - {r.status_code}')
+                                public_info=f'PULL {Status.MUMBLE.value} can not login - {r.status_code}')
         data = get_json(r)
         token = data["token"]
-        print(token)
         auth_header = {'Authorization': f'Bearer {token}', 'User-Agent': rnd_agent()}
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                              private_info=str(e),
-                             public_info=f'PULL {Status.MUMBLE.value} can not login: {r.url}, content: {r.text}')
+                             public_info=f'PULL {Status.MUMBLE.value} can not login')
 
     # Get Profile data
     try:
         r = requests.get(f'{url}/profile', headers=auth_header)
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PULL {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
         master_password = data["masterpass"]
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                              private_info=str(e),
-                             public_info=f'PULL {Status.MUMBLE.value} can not get profile data: {r.url}, content: {r.text}')
+                             public_info=f'PULL {Status.MUMBLE.value} can not get profile data')
 
     # Check Flag in storage
     try:
         r = requests.get(f'{url}/storage', headers=auth_header)
-        print(r.status_code, r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PULL {Status.MUMBLE.value} can not get flag: {r.url}, content: {r.text}')
+                                 public_info=f'PULL {Status.MUMBLE.value} can not get flag')
         data = get_json(r)
-        print("data", data)
         storage_id = str(json.loads(r.text)[0]["record_id"])
         if args.flag not in data[0]['password']:
             return CheckerResult(status=Status.CORRUPT.value,
                                  private_info=str(args.private_info),
-                                 public_info=f'PULL {Status.CORRUPT.value} Flags do not match: {r.url}, content: {r.text}')
+                                 public_info=f'PULL {Status.CORRUPT.value} Flags do not match')
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                              private_info=str(e),
-                             public_info=f'PULL {Status.MUMBLE.value} flags dont match: {r.url}, content: {r.text}')
+                             public_info=f'PULL {Status.MUMBLE.value} flags dont match')
 
     # Check Flag in shared_link
     try:
         r = requests.get(f'{url}/share?record_id={storage_id}', headers=auth_header)
-        print(r.status_code, r.text)
-        print("response123", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PULL {Status.MUMBLE.value} - {r.status_code}')
         # Check if link works
-        print("link", json.loads(r.text)["link"])
         r = requests.get(f'{url}/shared_link?shared_password_link={json.loads(r.text)["link"]}', headers={'User-Agent': rnd_agent()})
-        print("response", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PULL {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
-        print("data", data)
         if args.flag not in data['password']:
             return CheckerResult(status=Status.CORRUPT.value,
                                  private_info=str(args.private_info),
-                                 public_info=f'PULL {Status.CORRUPT.value} Flags do not match: {r.url}, content: {r.text}')
+                                 public_info=f'PULL {Status.CORRUPT.value} Flags do not match')
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                              private_info=str(e),
-                             public_info=f'PULL {Status.MUMBLE.value} flags dont match: {r.url}, content: {r.text}')
+                             public_info=f'PULL {Status.MUMBLE.value} flags dont match')
 
     # Check flag in decrypted file
     try:
         # get export link
         r = requests.get(f'{url}/export?username={json.loads(args.private_info)["username"]}', headers={'User-Agent': rnd_agent()})
-        print("response", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PULL {Status.MUMBLE.value} - {r.status_code}')
         data = get_json(r)
         # get encrypted file data
         r = requests.get(f'{url}/file?link={data["link"]}', headers={'User-Agent': rnd_agent()})
-        print("response-file", r.text)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
-        print(master_password)
+                                 public_info=f'PULL {Status.MUMBLE.value} - {r.status_code}')
         # get decrypted file data
         r = requests.post(f'{url}/decrypt', json={"master_password": master_password, "data": r.text}, headers={'User-Agent': rnd_agent()})
-        print("response-decrypt", r.json()["data"])
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
                                  private_info=f'{r.status_code}',
-                                 public_info=f'PULL {Status.MUMBLE.value} {r.url} - {r.status_code}')
+                                 public_info=f'PULL {Status.MUMBLE.value} - {r.status_code}')
         # check if decrypted data is decrypted right
         default_text = """b'Data format: {"password":<user-password>, "title":<service-title>}{<next record>}"""
         decrypted = str(r.json()["data"]).replace(default_text, '')
-        print("decrypted", decrypted[decrypted.find(":")+1:-1])
         if args.flag not in decrypted[decrypted.find(":")+1:-1]:
             return CheckerResult(status=Status.CORRUPT.value,
                                  private_info=str(args.private_info),
-                                 public_info=f'PULL {Status.CORRUPT.value} Flags do not match: {r.url}, content: {r.text}')
+                                 public_info=f'PULL {Status.CORRUPT.value} Flags do not match')
     except Exception as e:
         return CheckerResult(status=Status.MUMBLE.value,
                             private_info=str(e),
-                            public_info=f'PULL {Status.MUMBLE.value} create backup not working: {r.url}, content: {r.text}')
+                            public_info=f'PULL {Status.MUMBLE.value} create backup not working')
     return res
 
 
