@@ -1,13 +1,9 @@
 version: '3.3'
 services:
   server:
+    image: ${IMAGE:-ghcr.io/n57uctf/bank_service:main}
     restart: always
     build: ./bank_service/.
-    #deploy:
-      #resources:
-          #limits:
-            #cpus: "0.50"
-            #memory: 512M
     expose:
       - 8080
     ports:
