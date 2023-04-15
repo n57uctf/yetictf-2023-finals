@@ -117,6 +117,7 @@ public class Magick
                         string _in = "";
                         _in += your_virus[i]; 
                         _in += your_virus[i + 1];
+                        _in += "0";
                         if (first.EndsWith(_in) == false)
                         {
                             first = first.Substring(0, first.Length - 3);
