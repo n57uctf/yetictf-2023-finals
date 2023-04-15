@@ -120,8 +120,7 @@ build {
       "sudo -E chown -R ${var.username}:${var.username} /home/${var.username}/",
       "sudo -E -u ${var.username} rm -rf /home/${var.username}/.jury",
       "sudo -E -u ${var.username} find /home/${var.username}/ -name \"host_prepare.sh\" -exec echo FOUND PREPARE {} \\; -exec bash {} \\;",
-      "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec echo FOUND docker-compose {} \\; -exec docker-compose -f {} up --no-build -d \\;",
-      "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec docker-compose -f {} down \\;"
+      "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec echo FOUND docker-compose {} \\; -exec docker-compose -f {} up --no-build -d \\;"
     ]
   }
   
