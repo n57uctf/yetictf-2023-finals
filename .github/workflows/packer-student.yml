@@ -22,6 +22,10 @@ env:
 
 jobs:
   build:
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     steps:
       - name: Check build environment
@@ -124,13 +128,12 @@ jobs:
 
       - name: Put to Yandex Object storage
         run: |
-          alias ys3='aws s3 --endpoint-url=https://storage.yandexcloud.net'
-          ys3 cp --quiet ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip
-          ys3 cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.ZIP_PREFIX }}-latest.ova.zip
-          sha256sum ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip | ys3 cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum
-          ys3 cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.sha256sum
-          echo ${{ env.ZIP_PASSWORD }} | ys3 cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha
-          ys3 cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.ghsha
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.ZIP_PREFIX }}-latest.ova.zip
+          sha256sum ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip | aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.sha256sum
+          echo ${{ env.ZIP_PASSWORD }} | aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.ghsha
         working-directory: ./.vulnbox/output-vulnbox/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
