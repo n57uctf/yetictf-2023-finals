@@ -14,12 +14,11 @@ on:
 env:
   PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
   PKR_VAR_services: '["anime_boys","factory", "merc2023","password-manager","vulnogramm"]'
+  PKR_VAR_username: yeti
+  PKR_VAR_password: yeti_${{ github.run_id }} 
 
 jobs:
-  vagrant:
-    outputs:
-      vm_name: ${{ steps.vm-details.outputs.vm_name }}
-      ssh_port: ${{ steps.vm-details.outputs.ssh_port }}
+  build:
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     steps:
       - name: Check build environment
@@ -70,38 +69,17 @@ jobs:
       - name: Check virtualbox machine settings
         run: vboxmanage showvminfo ${{ steps.vm-details.outputs.vm_name }}
 
-      - run: vagrant halt -f && vagrant destroy -f
-        if: ${{ failure() }}
-        working-directory: ./.vulnbox/
-
-      - run: rm -rf .vagrant
-        if: ${{ failure() }}
-        working-directory: ./.vulnbox/
-      
-      - name: Delete all vulnbox_default VMs
-        run: vboxmanage list vms | grep "vulnbox_default_" | awk -F" " '{print $1}' | xargs -I {} vboxmanage unregistervm --delete {}
-        if: ${{ failure() }} 
-        working-directory: ./.vulnbox/
-
-
-  packer:
-    needs: vagrant
-    runs-on: [self-hosted, linux, X64, vbox, vagrant]
-    env:
-      PKR_VAR_username: yeti
-      PKR_VAR_password: yeti_${{ github.run_id }} 
-    steps:
       - run: packer init . && packer validate .
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
-          PKR_VAR_vagrantbox: ${{ needs.vagrant.outputs.vm_name }}
-          PKR_VAR_port: ${{ needs.vagrant.outputs.ssh_port }}
+          PKR_VAR_vagrantbox: ${{ steps.vm-details.outputs.vm_name }}
+          PKR_VAR_port: ${{ steps.vm-details.outputs.ssh_port }}
         working-directory: ./.vulnbox/
 
       - run: packer build .
         env:
-          PKR_VAR_vagrantbox: ${{ needs.vagrant.outputs.vm_name }}
-          PKR_VAR_port: ${{ needs.vagrant.outputs.ssh_port }}
+          PKR_VAR_vagrantbox: ${{ steps.vm-details.outputs.vm_name }}
+          PKR_VAR_port: ${{ steps.vm-details.outputs.ssh_port }}
         working-directory: ./.vulnbox/
 
       - run: vagrant halt -f && vagrant destroy -f
@@ -118,7 +96,7 @@ jobs:
         working-directory: ./.vulnbox/
 
   push:
-    needs: packer
+    needs: build
     if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  }}
     name: Push VM to s3
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
