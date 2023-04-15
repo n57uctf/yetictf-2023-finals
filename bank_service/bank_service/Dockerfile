@@ -7,4 +7,4 @@ CMD java -jar /data/app.jar
 
 #copy hello world to docker image from builder image
 
-COPY *.jar /data/app.jar
+COPY ./app/*.jar /data/app.jar
