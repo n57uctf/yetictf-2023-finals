@@ -348,6 +348,7 @@ def push(args: PushArgs) -> CheckerResult:
         r = requests.post(f'http://{args.host}:{PORT}/backend/adduser',  # https://localhost:7180/api/User
                           json=json.loads(json.dumps(creds)),
                           allow_redirects=False,
+                          timeout = 5,
                           headers=headers)  # cookies='158b36ec3ea4f5484054ad1fd21407333c874ef0fa4f0c8e34387efd5464a1e9500e2277b0367d71a273e5b46fa0869a'
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -360,6 +361,7 @@ def push(args: PushArgs) -> CheckerResult:
     try:  # try authenticate
         r = requests.post(f'http://{args.host}:{PORT}/backend/authentication',
                           json=json.loads(json.dumps(creds)),
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -373,6 +375,7 @@ def push(args: PushArgs) -> CheckerResult:
     try:  # try validate
         r = requests.post(f'http://{args.host}:{PORT}/backend/validate',
                           json=json.loads(json.dumps({'token': token})),
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -402,6 +405,7 @@ def push(args: PushArgs) -> CheckerResult:
                           json=json.loads(json.dumps(
                               {'photo': photo, 'Owner': creds['Login'], 'method': method, 'sign': args.flag,
                                'subscript': subscript})),
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -414,6 +418,7 @@ def push(args: PushArgs) -> CheckerResult:
     id_post = int(r.content)
     try:  # try take_feed
         r = requests.post(f'http://{args.host}:{PORT}/backend/feed',
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -426,6 +431,7 @@ def push(args: PushArgs) -> CheckerResult:
     try:  # try your_post
         r = requests.post(f'http://{args.host}:{PORT}/backend/yourpost',
                           json=json.loads(json.dumps({'id': id_post, 'owner': creds['Login'], 'token': token})),
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -445,6 +451,7 @@ def pull(args: PullArgs) -> CheckerResult:
     try:  # try authenticate
         r = requests.post(f'http://{args.host}:{PORT}/backend/authentication',
                           json=json.loads(json.dumps(creds)),
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -458,6 +465,7 @@ def pull(args: PullArgs) -> CheckerResult:
     try:  # try validate
         r = requests.post(f'http://{args.host}:{PORT}/backend/validate',
                           json=json.loads(json.dumps({'token': token})),
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -469,6 +477,7 @@ def pull(args: PullArgs) -> CheckerResult:
                              public_info=f'PUSH {Status.DOWN.value} Can not connect')
     try:  # try take_feed
         r = requests.post(f'http://{args.host}:{PORT}/backend/feed',
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -486,6 +495,7 @@ def pull(args: PullArgs) -> CheckerResult:
         r = requests.post(f'http://{args.host}:{PORT}/backend/yourpost',
                           json=json.loads(json.dumps(
                               {'id': args.private_info['id_post'], 'owner': creds['Login'], 'token': token})),
+                          timeout = 5,
                           allow_redirects=False, verify=False, headers=headers)
         if r.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value,
@@ -556,8 +566,8 @@ def readfile(path):
 if __name__ == '__main__':
     import sys
 
-    # action, *args = sys.argv[1:]
-    action, *args = 'push', '127.0.0.1', 1, 'flag'
+    action, *args = sys.argv[1:]
+    #action, *args = 'push', '127.0.0.1', 1, 'flag'
     #action, *args = 'pull', '127.0.0.1', {'id_post': 9,
                                           #'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiU3liaWxsZTQ1NTA2IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiVXNlciIsIm5iZiI6MTY4MTQ1NDEzOCwiZXhwIjoxNjgxNDU1MDM4LCJpc3MiOiJNeUF1dGhTZXJ2ZXIiLCJhdWQiOiJWdWxub2dyYW1tQ2xpZW50In0.PliY-ceFTiWAQaLK0w4COssQKqMv3w8qYUv0CtNULaM',
                                          # 'method': 1, 'creds': {'Login': 'Sybille45506',
