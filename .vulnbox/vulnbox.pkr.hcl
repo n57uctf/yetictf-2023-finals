@@ -84,7 +84,7 @@ build {
       "HOME=/home/${var.username}"
     ]
     inline = [
-      for s in var.services: "sudo cp -r /vagrant/${s} /home/${var.username}/${s}"
+      for s in var.services: "sudo cp -r /vagrant/${s}/${s} /home/${var.username}/${s}"
     ]
   }
   provisioner "shell" {
