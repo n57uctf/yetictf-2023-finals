@@ -13,7 +13,7 @@ on:
 
 env:
   PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
-  PKR_VAR_services: '["anime_boys","factory", "merc2023","password-manager","vulnogramm"]'
+  PKR_VAR_services: '["anime_boys","factory","merc2023","password-manager","vulnogramm"]'
   PKR_VAR_username: yeti
   PKR_VAR_password: yeti_${{ github.run_id }}
   PKR_VAR_registry: ghcr.io
@@ -28,6 +28,9 @@ jobs:
       id-token: write
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
       - name: Check build environment
         run: |
           rm -rf .vulnbox/output-vulnbox

@@ -5,7 +5,7 @@ on:
 
 env:
   PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
-  PKR_VAR_services: '["store-api", "jora"]'
+  PKR_VAR_services: '["store-api","jora"]'
 
 jobs:
   vagrant:
@@ -14,6 +14,9 @@ jobs:
       ssh_port: ${{ steps.vm-details.outputs.ssh_port }}
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
       - name: Check build environment
         run: |
           rm -rf .vulnbox/output-vulnbox
