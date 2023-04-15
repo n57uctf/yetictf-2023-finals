@@ -81,7 +81,7 @@ def push(args: PushArgs) -> CheckerResult:
             f'{api_base_url}/registration/',
             json=registration_data, headers={'User-Agent': rnd_agent()}
         )
-        if response.status_code != 200:
+        if response.status_code != 201:
             return CheckerResult(
                 status=Status.MUMBLE.value,
                 private_info=f'{response.status_code}',
