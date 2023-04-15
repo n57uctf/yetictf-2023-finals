@@ -1,20 +1,20 @@
 version: '3'
 
 services:
-        interface:
-                restart: on-failure
-                build: ./interface/
-                ports:
-                        - "8181:8181/tcp"
-                environment:
-                        - interface_addr=0.0.0.0:8181
-                        - plc_addr=plc:502
-                depends_on: ["plc"]
-        
-        plc:
-                restart: on-failure
-                build: ./plc/
-                ports:
-                        - "502:502/tcp"
-                environment:
-                        - plc_addr=0.0.0.0:502
+  interface:
+    restart: on-failure
+    build: ./interface/
+    ports:
+      - "8181:8181/tcp"
+    environment:
+      - interface_addr=0.0.0.0:8181
+      - plc_addr=plc:502
+    depends_on: ["plc"]
+
+  plc:
+    restart: on-failure
+    build: ./plc/
+    ports:
+      - "502:502/tcp"
+    environment:
+      - plc_addr=0.0.0.0:502
