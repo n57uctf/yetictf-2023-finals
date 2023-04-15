@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        
+
       - name: Check build environment
         run: |
           rm -rf .vulnbox/output-vulnbox
@@ -132,7 +132,7 @@ jobs:
       - name: Put to Yandex Object storage
         run: |
           aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip
-          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.ZIP_PREFIX }}-latest.ova.zip
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.ova.zip
           sha256sum ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip | aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum
           aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.sha256sum
           echo ${{ env.ZIP_PASSWORD }} | aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha
