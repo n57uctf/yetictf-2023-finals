@@ -1,6 +1,6 @@
 $script = <<SCRIPT
 sudo pacman -Sy archlinux-keyring --noconfirm
-sudo pacman -S --noconfirm docker git docker-compose virtualbox-guest-utils-nox
+sudo pacman -S --noconfirm nano docker git docker-compose virtualbox-guest-utils-nox
 echo -e "y\\ny" | sudo pacman -Scc
 sudo systemctl enable docker
 sudo systemctl start docker
