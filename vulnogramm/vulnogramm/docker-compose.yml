@@ -29,7 +29,7 @@ services:
     build: ./Exsample/Vulnogramm/.
     restart: always
     volumes:
-      - .:/app
+      - ./backend:${COPY:-/app}
     expose:
       - 80
     depends_on:

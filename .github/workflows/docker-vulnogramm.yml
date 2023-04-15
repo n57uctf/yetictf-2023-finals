@@ -95,6 +95,7 @@ jobs:
           env: 
             IMAGE_BACKEND: ${{ steps.meta-backend.outputs.tags }}
             IMAGE_FRONTEND: ${{ steps.meta-frontend.outputs.tags }}
+            COPY: /code
 
         - name: Get Host IP addr
           id: ip-addr

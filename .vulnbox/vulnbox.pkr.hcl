@@ -113,6 +113,19 @@ build {
   provisioner "shell" {
     environment_vars = [
       "PWD=/vagrant",
+      "HOME=/home/${var.username}",
+      "COPY=/code"
+    ]
+    inline = [
+      "cd /vagrant",
+      "sudo -E rm -rf /home/${var.username}/vulnogramm/Exsample",
+      "sudo -E docker compose -f /home/${var.username}/vulnogramm/docker-compose.yml run --no-deps --entrypoint 'cp -r /app /code' web"
+    ]
+  }
+
+  provisioner "shell" {
+    environment_vars = [
+      "PWD=/vagrant",
       "HOME=/home/${var.username}"
     ]
     inline = [
@@ -127,11 +140,10 @@ build {
   provisioner "shell" {
     environment_vars = [
       "PWD=/vagrant",
-      "HOME=/home/${var.username}"
+      "HOME=/home/${var.username}",
     ]
     inline = [
       "cd /vagrant",
-      "sudo -E rm -rf /home/${var.username}/vulnogramm/Exsample",
       # TODO: Fix deletion of BankService
       "sudo -E rm -rf /home/${var.username}/BankService/backend",
       "echo -e 'y\\ny' | sudo -E docker image prune -a",
