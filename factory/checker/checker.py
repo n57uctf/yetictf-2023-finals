@@ -187,7 +187,7 @@ def push(args: PushArgs) -> CheckerResult:
         if r3.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         r4 = sess.get(f'http://{args.host}:{PORT}/health',timeout=tout)
-        if r4.status_code != 200 || r5.json()["status"] != "healthy":
+        if r4.status_code != 200 or r5.json()["status"] != "healthy":
             #Dont change public info, it's needed to be sure that real plc works
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value}')
         #TODO check tempHandler
