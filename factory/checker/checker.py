@@ -1,5 +1,9 @@
 import random
 import requests
+import enum
+from typing import NamedTuple
+import base64
+import json
 
 PORT=8181
 
@@ -28,7 +32,7 @@ agents = [
 def rnd_agent():
     return random.choice(agents)
 
-def get_random_password(length):
+def get_random_password():
     password = ''
     for x in range(random.randint(10,15)):
         password = password + random.choice(list(
@@ -175,26 +179,26 @@ def push(args: PushArgs) -> CheckerResult:
     try:
         sess = requests.Session()
         sess.headers.update({'User-Agent': uagent})
-        r1 = sess.post(f'http://{args.host}:{PORT}/signup',data={'username': login, 'password': password}, headers={'User-Agent': uagent},timeout=tout)
+        r1 = sess.post(f'http://{args.host}:{PORT}/signup',json={'username': login, 'password': password},timeout=tout)
         if r1.status_code != 200:
-            return CheckerResult(status.Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
-        r2 = sess.post(f'http://{args.host}:{PORT}/signin', data={'username':login, 'password':password},timeout=tout)
+            return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
+        r2 = sess.post(f'http://{args.host}:{PORT}/signin', json={'username':login, 'password':password},timeout=tout)
         if r2.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r2.url} - {r2.status_code}')
         token = r2.cookies["token"]
         private_info["cookie"] = token
-        r3.sess.post(f'http://{args.host}:{PORT}/control', date={"set_temperature":temp, "comment":args.flag},timeout=tout)
+        r3 = sess.post(f'http://{args.host}:{PORT}/control', json={"set_temperature":temp, "comment":args.flag},timeout=tout)
         if r3.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r3.url} - {r3.status_code}')
         r4 = sess.get(f'http://{args.host}:{PORT}/health',timeout=tout)
-        if r4.status_code != 200 or r5.json()["status"] != "healthy":
+        if r4.status_code != 200 or r4.json()["status"] != "healthy":
             #Dont change public info, it's needed to be sure that real plc works
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value}')
         #TODO check tempHandler
         r5 = sess.post(f'http://{args.host}:{PORT}/logout',timeout=tout)
         if r5.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {r5.url} - {r5.status_code}')
-    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout:
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
         return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
 
     return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(json.dumps(private_info).encode()).decode(),public_info='PUSH works')
@@ -204,21 +208,21 @@ def pull(args: PullArgs) -> CheckerResult:
     tout = 5
     sess = requests.Session()
     sess.headers.update({'User-Agent': private_info["uagent"]})
-    sess.cookies = private_info["token"]
+    sess.cookies.set("token", private_info["cookie"])
     try:
         #just for updating time on jwt token
-        sess.post("http://{args.host}:{PORT}/refresh",timeout=tout)
-        r1 = sess.get("http://{args.host}:{PORT}/history",timeout=tout)
-        d = r1.json
-        if isinstance(d,list) and len(d) > 0 and isinstance(d[0],dict) and d[0].keys().sort() == ["set_temperature","comment","nano_timestamp","user_id","user_id"].sort():
+        sess.post(f"http://{args.host}:{PORT}/refresh",timeout=tout)
+        r1 = sess.get(f"http://{args.host}:{PORT}/history",timeout=tout)
+        d = r1.json()
+        if isinstance(d,list) and len(d) > 0 and isinstance(d[0],dict) and list(d[0].keys()).sort() == ["set_temperature","comment","nano_timestamp","user_id","user_id"].sort():
             for e in d:
-                if e.comment == args.flag:
+                if e["comment"] == args.flag:
                     return CheckerResult(status=Status.OK.value, private_info=base64.b64encode(json.dumps(private_info).encode()).decode(),public_info='PULL works')
             return CheckerResult(status=Status.CORRUPT.value, private_info='', public_info=f'PULL {Status.CORRUPT.value} {r1.url} - {r1.status_code}')
         else:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code} - cant parse answer')
-    except:
-        return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PULL {Status.MUMBLE.value} {r1.url} - {r1.status_code}')
+    except Exception as e:
+        return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PULL {Status.ERROR.value} {e}')
 
 
 if __name__ == '__main__':
