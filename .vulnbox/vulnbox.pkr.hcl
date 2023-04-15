@@ -57,7 +57,7 @@ source "virtualbox-vm" "vulnbox" {
     "--manifest",
     "--vsys", "0",
     "--vmname", "${var.event}",
-    "--description", "ssh ${var.username}@10.0.<N>.2\nPassword: ${var.password}\nПримечание:\n- Bridge-адаптер - второй из четырех\n"
+    "--description", "ssh ${var.username}@192.168.<N>.2\nPassword: ${var.password}\nПримечание:\n- Bridge-адаптер - второй из четырех\n"
   ]
   output_filename = "${var.event}"
   format = "ova"
