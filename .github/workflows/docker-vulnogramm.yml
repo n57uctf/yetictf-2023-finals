@@ -111,8 +111,8 @@ jobs:
           run: |
             cat << EOF > Dockerfile.${{ env.SERVICE_NAME }}
             FROM ghcr.io/n57uctf/worker:dev
-            COPY checker/ /code/checkers/
-            COPY checker/Pico/ /code/checkers/Pico/
+            COPY checker/* /code/checkers/
+            COPY checker/Pico/* /code/checkers/Pico/
             RUN ls -al /code/checkers/ && pip install --no-cache-dir --upgrade -r /code/checkers/requirements.txt
             EOF
           working-directory: ${{ env.SERVICE_NAME }}/
