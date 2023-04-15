@@ -21,7 +21,7 @@ class StatusException(Exception):
 
 def check_status_code(resp: requests.Response, public_info: str) -> None:
     if resp.status_code >= 500:
-        raise StatusException(status=sStatus.DOWN.value, private_info="", public_info=public_info)
+        raise StatusException(status=Status.DOWN.value, private_info="", public_info=public_info)
     if not resp.ok:
         raise StatusException(status=Status.MUMBLE.value, private_info="", public_info=public_info)
 

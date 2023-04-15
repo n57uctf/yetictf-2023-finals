@@ -3,13 +3,13 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework import status
 from rest_framework.response import Response
-
 from basket.services import get_basket_products
 from clients.services import get_client_by_id_or_none
 from products.services import get_product_by_id_or_none
+from secretkeys.services import get_secret_key_by_product_id_or_none
 from tokens.decorators import check_access_token
 from .serializers import OrderPaymentSerializer, OrderSerializer, OrderQuerySerializer, ReturnProductSerializer, \
-    OrdersCreationSerializer, OrderProductsSerializer
+    OrdersCreationSerializer, OrderProductsSerializer, OrderPaymentResultsSerializer
 from .services import get_orders_by_client_id, create_order, save_order_products, get_order_by_id_or_none, \
     calculate_order_amount, get_order_products
 from .settings import OrdersStatuses
@@ -61,7 +61,7 @@ class OrderPaymentAPIView(GenericAPIView):
                 type=openapi.TYPE_STRING),
         ],
         responses={
-            status.HTTP_200_OK: OrderProductsSerializer(many=True),
+            status.HTTP_200_OK: OrderPaymentResultsSerializer(many=True),
             status.HTTP_403_FORBIDDEN: 'Access denied'
         }
     )
@@ -90,9 +90,20 @@ class OrderPaymentAPIView(GenericAPIView):
             order.status = OrdersStatuses.PROCESSED.value
             client.save()
             order.save()
+            response_data = list()
             products = get_order_products(order_id)
-            products_serializer = OrderProductsSerializer(products, many=True)
-            return Response(status=status.HTTP_200_OK, data=products_serializer.data)
+            for product in products:
+                product_secret_key = get_secret_key_by_product_id_or_none(product.pk)
+                key = ''
+                if product_secret_key is not None:
+                    key = product_secret_key.key
+                response_data.append(
+                    {
+                        'prodict': OrderProductsSerializer(product).data,
+                        'secret_key': key
+                    }
+                )
+            return Response(status=status.HTTP_200_OK, data=response_data)
         return Response(serializer.errors, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 

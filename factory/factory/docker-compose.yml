@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  interface:
+    restart: on-failure
+    image: ${IMAGE_INTERFACE:-ghcr.io/n57uctf/factory-interface:main}
+    build: ./interface/
+    ports:
+      - "8181:8181/tcp"
+    environment:
+      - interface_addr=0.0.0.0:8181
+      - plc_addr=plc:502
+    depends_on: ["plc"]
+
+  plc:
+    image: ${IMAGE_PLC:-ghcr.io/n57uctf/factory-plc:main}
+    restart: on-failure
+    build: ./plc/
+    ports:
+      - "502:502/tcp"
+    environment:
+      - plc_addr=0.0.0.0:502

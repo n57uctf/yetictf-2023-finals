@@ -5,9 +5,6 @@ from enum import Enum
 from typing import List, Tuple
 
 
-PREMIUM_STATUS_PRICE = 50_000
-
-
 class ClientsStatuses(Enum):
     DEFAULT = 'default'
     PREMIUM = 'premium'

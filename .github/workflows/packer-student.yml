@@ -1,0 +1,148 @@
+name: Packer for Student
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "cicd"]
+    paths:
+      - '.vulnbox/**'
+      - '.github/workflows/packer-student.yml'
+  workflow_call:
+  schedule:
+    - cron: '0 */2 * * *'
+
+env:
+  PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
+  PKR_VAR_services: '["anime_boys","factory","merc2023","password-manager","vulnogramm"]'
+  PKR_VAR_username: yeti
+  PKR_VAR_password: yeti_${{ github.run_id }}
+  PKR_VAR_registry: ghcr.io
+  PKR_VAR_dockeruser: ${{ github.actor }}
+  PKR_VAR_dockertoken: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    runs-on: [self-hosted, linux, X64, vbox, vagrant]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Check build environment
+        run: |
+          rm -rf .vulnbox/output-vulnbox
+          rm -rf .vulnbox/.vagrant
+          rm -rf .vulnbox/packer_cache
+          vagrant -h > /dev/null
+          packer -h > /dev/null
+          vboxmanage > /dev/null
+
+      - name: Cache Vagrant boxes
+        uses: actions/cache@v2
+        with:
+          path: ~/.vagrant.d/boxes
+          key: ${{ runner.os }}-vagrant-${{ hashFiles('.vulnbox/Vagrantfile') }}
+          restore-keys: |
+            ${{ runner.os }}-vagrant-
+
+      - run: vagrant validate
+        working-directory: ./.vulnbox/
+
+      - name: Check vagrant environment
+        run: |
+          vagrant version
+          vagrant global-status --prune
+
+      - run: vagrant up --no-provision
+        working-directory: ./.vulnbox/
+          
+      - run: vagrant provision
+        working-directory: ./.vulnbox/
+
+      - run: vagrant halt
+        working-directory: ./.vulnbox/
+
+      - run: vagrant status
+        working-directory: ./.vulnbox/
+        
+      - name: Get VM details
+        id: vm-details
+        run: |
+          UUID=$(cat .vagrant/machines/default/virtualbox/id)
+          echo "vm_name=$( vboxmanage showvminfo $UUID --machinereadable | grep -o -E 'vulnbox_default_[0-9]{1,}_[0-9]{1,}' | uniq)" >> $GITHUB_OUTPUT
+          echo "ssh_port=$(vboxmanage showvminfo $UUID --machinereadable | grep Forwarding  | awk -F',' '{print $4}')" >> $GITHUB_OUTPUT
+        working-directory: ./.vulnbox/
+
+      - name: Check virtualbox machine settings
+        run: vboxmanage showvminfo ${{ steps.vm-details.outputs.vm_name }}
+
+      - run: packer init . && packer validate .
+        env:
+          PACKER_GITHUB_API_TOKEN: ${{ secrets.PACKER_GITHUB_API_TOKEN }}
+          PKR_VAR_vagrantbox: ${{ steps.vm-details.outputs.vm_name }}
+          PKR_VAR_port: ${{ steps.vm-details.outputs.ssh_port }}
+        working-directory: ./.vulnbox/
+
+      - run: packer build .
+        env:
+          PKR_VAR_vagrantbox: ${{ steps.vm-details.outputs.vm_name }}
+          PKR_VAR_port: ${{ steps.vm-details.outputs.ssh_port }}
+        working-directory: ./.vulnbox/
+
+      - run: vagrant halt -f && vagrant destroy -f
+        if: ${{ always() }}
+        working-directory: ./.vulnbox/
+
+      - run: rm -rf .vagrant
+        if: ${{ always() }}
+        working-directory: ./.vulnbox/
+      
+      - name: Delete all vulnbox_default VMs
+        run: vboxmanage list vms | grep "vulnbox_default_" | awk -F" " '{print $1}' | xargs -I {} vboxmanage unregistervm --delete {}
+        if: ${{ always() }} 
+        working-directory: ./.vulnbox/
+
+  push:
+    needs: build
+    if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  }}
+    name: Push VM to s3
+    runs-on: [self-hosted, linux, X64, vbox, vagrant]
+    env:
+      ZIP_PASSWORD: ${{ github.sha }}
+    steps:
+      - name: Check aws cli
+        run: aws s3 help >/dev/null 
+
+      - name: Get current date
+        id: today
+        run: echo "today=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: (DEBUG) check output folder
+        run: ls -alh ./.vulnbox/output-vulnbox/
+      
+      - name: ZIP w\ password
+        run: zip -e -P ${{ env.ZIP_PASSWORD }} ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.PKR_VAR_event }}.ova
+        working-directory: ./.vulnbox/output-vulnbox/
+        env: 
+          ZIP_PREFIX: ${{ env.PKR_VAR_event }}_Student
+
+      - name: Put to Yandex Object storage
+        run: |
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.ZIP_PREFIX }}-latest.ova.zip
+          sha256sum ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip | aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.sha256sum
+          echo ${{ env.ZIP_PASSWORD }} | aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.ghsha
+        working-directory: ./.vulnbox/output-vulnbox/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "ru-central1"
+          ZIP_PREFIX: ${{ env.PKR_VAR_event }}_Student
+
+      - run: rm -rf output-vulnbox
+        working-directory: ./.vulnbox/

@@ -1,18 +1,11 @@
-name: packer
+name: Packer for School
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main", "cicd"]
-    paths:
-      - '.vulnbox/**'
-      - '.github/workflows/packer.yml'
-  workflow_call:
-  schedule:
-    - cron: '0 */2 * * *'
 
 env:
   PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
+  PKR_VAR_services: '["store-api","jora"]'
 
 jobs:
   vagrant:
@@ -21,6 +14,9 @@ jobs:
       ssh_port: ${{ steps.vm-details.outputs.ssh_port }}
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
       - name: Check build environment
         run: |
           rm -rf .vulnbox/output-vulnbox
@@ -88,7 +84,7 @@ jobs:
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     env:
       PKR_VAR_username: yeti
-      PKR_VAR_password: YetiCTF2023 # TODO: Fix hardcode password pls
+      PKR_VAR_password: yeti_${{ github.run_id }} 
     steps:
       - run: packer init . && packer validate .
         env:
@@ -131,12 +127,20 @@ jobs:
         id: today
         run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
+      - name: (DEBUG) check output folder
+        run: ls -alh ./.vulnbox/output-vulnbox/
+      
       - name: ZIP w\ password
-        run: zip -e -P $ZIP_PASSWORD ${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.PKR_VAR_event }}.ova
+        run: zip -e -P $ZIP_PASSWORD ${{ env.PKR_VAR_event }}_School_${{ steps.today.outputs.today }}.ova.zip ${{ env.PKR_VAR_event }}.ova
+        working-directory: ./.vulnbox/output-vulnbox/
+
+      - run: sha256sum ${{ env.PKR_VAR_event }}_School_${{ steps.today.outputs.today }}.ova.zip | tee sha256sum
         working-directory: ./.vulnbox/output-vulnbox/
 
       - name: Put to Yandex Object storage
-        run: aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.PKR_VAR_event }}_${{ steps.today.outputs.today }}.ova.zip
+        run: |
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${{ env.PKR_VAR_event }}_School_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.PKR_VAR_event }}_School_${{ steps.today.outputs.today }}.ova.zip
+          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet sha256sum s3://vulnbox/sha256sum.txt
         working-directory: ./.vulnbox/output-vulnbox/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}

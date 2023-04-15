@@ -64,8 +64,7 @@ def calculate_order_amount(order_id: int) -> int:
     """
     amount = 0
     order_products = OrderProducts.objects.select_related('product').filter(
-        order_id=order_id, order__status=OrdersStatuses.WAITING_FOR_PAYMENT)
-    print(order_products)
+        order_id=order_id, order__status=OrdersStatuses.WAITING_FOR_PAYMENT.value)
     for order_product in order_products:
         amount += order_product.product.price
     return amount
@@ -78,7 +77,7 @@ def get_order_products(order_id: int) -> List[Products]:
     :return: list of filtered products
     :rtype: List[Products]
     """
-    order_products = OrderProducts.objects.select_related('product').filter(pk=order_id)
+    order_products = OrderProducts.objects.select_related('product').filter(order_id=order_id)
     return [order_product.product for order_product in order_products]
 
 

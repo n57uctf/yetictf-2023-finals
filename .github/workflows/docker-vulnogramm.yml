@@ -15,13 +15,19 @@ env:
 
 
 jobs:
-  build-backend:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       id-token: write
-
+    strategy:
+      matrix:
+        include:
+          - image: "backend"
+            context: "Exsample/Vulnogramm/"
+          - image: "frontend"
+            context: "Vulnogramm_front/vulnogramm/"         
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -40,57 +46,116 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.image }}
 
 
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v4
         with:
-          context: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/Exsample/Exsample/
+          context: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/${{matrix.context }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
+  checker:
+      needs: [build]
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        packages: read
+      
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v3
 
-  build-frontend:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
+        - name: Log into registry ${{ env.REGISTRY }}
+          uses: docker/login-action@v2
+          with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-  
-      - name: Setup Docker buildx
-        uses: docker/setup-buildx-action@v2
+        - name: Extract Docker metadata (backend)
+          id: meta-backend
+          uses: docker/metadata-action@v4
+          with:
+            images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+    
+        - name: Extract Docker metadata (frontend)
+          id: meta-frontend
+          uses: docker/metadata-action@v4
+          with:
+            images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
 
-      - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        - name: docker compose up
+          run: docker compose up -d --remove-orphans --quiet-pull --wait --no-build
+          working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
+          env: 
+            IMAGE_BACKEND: ${{ steps.meta-backend.outputs.tags }}
+            IMAGE_FRONTEND: ${{ steps.meta-frontend.outputs.tags }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+        - name: Get Host IP addr
+          id: ip-addr
+          run: |
+            if=$(ip r | grep default | awk -F' ' '{print $5}')
+            ipaddr=$(ip -4 addr show $if | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+            echo "ipaddr=$ipaddr" >> $GITHUB_OUTPUT
+      
+        - run: docker compose ps
+          working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
 
+        - name: Setting up checker Dockerfile
+          run: |
+            cat << EOF > Dockerfile.${{ env.SERVICE_NAME }}
+            FROM ghcr.io/n57uctf/worker:dev
+            COPY checker/* /code/checkers/
+            RUN ls -al /code/checkers/ && pip install --no-cache-dir --upgrade -r /code/checkers/requirements.txt
+            EOF
+          working-directory: ${{ env.SERVICE_NAME }}/
+        
+        - run: |
+            image=$(docker build -q -f Dockerfile.${{ env.SERVICE_NAME }} .)
+            echo "image=$image" >> $GITHUB_OUTPUT
+          id: checker-image
+          working-directory: ${{ env.SERVICE_NAME }}/
+        
+        - name: Checker push
+          id: checker-push
+          run: |
+            set +e
+            docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+            from checkers.checker import push,PushArgs;
+            r=push(PushArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",round_number=1,flag="${{ github.sha }}"));
+            open("/out/push_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
+            exit(r.status)'
 
-      - name: Build and push Docker image
-        id: build-and-push
-        uses: docker/build-push-action@v4
-        with:
-          context: ./${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/Vulnogramm_front/vulnogramm/
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
+            exitcode=$?
+            echo "exitcode=$exitcode" 
+            cat /tmp/private_${{ github.run_id }}/push_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
+            if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+            exit 0
+        
+        - name: Checker pull
+          run: |
+            set +e
+            docker run -v /tmp/private_${{ github.run_id }}/:/out/ --rm ${{ steps.checker-image.outputs.image }} python -c '
+            from checkers.checker import pull,PullArgs;
+            r=pull(PullArgs(host="${{ steps.ip-addr.outputs.ipaddr }}",private_info='\''${{ steps.checker-push.outputs.private_info }}'\'',flag="${{ github.sha }}"));
+            open("/out/pull_${{ github.run_id }}","w").write(f"private_info={r.private_info}");
+            exit(r.status)'
+            
+            exitcode=$?
+            echo "exitcode=$exitcode" 
+            cat /tmp/private_${{ github.run_id }}/pull_${{ github.run_id }} | tee -a "${GITHUB_OUTPUT}"
+            if [[ $exitcode -ne "101" ]]; then exit $exitcode; fi
+            exit 0
 
+        - run: docker rmi -f ${{ steps.checker-image.outputs.image }}
+          if: ${{ always() }}
 
+        - name: docker compose down
+          run: docker compose down --remove-orphans --rmi all --volumes
+          if: ${{ always() }}
+          working-directory: ${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}/
