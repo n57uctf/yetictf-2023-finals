@@ -10,5 +10,5 @@ vagrant halt
 vagrant status
 rm -rf output-vulnbox
 packer init .
-packer validate -var vagrantbox=$PKR_VAR_vagrantbox -var port=$PKR_VAR_port -var username=$PKR_VAR_username -var password=$PKR_VAR_password -var event=$PKR_VAR_event  .
-packer build -var vagrantbox=$PKR_VAR_vagrantbox -var port=$PKR_VAR_port -var username=$PKR_VAR_username -var password=$PKR_VAR_password -var event=$PKR_VAR_event .
+packer validate -var vagrantbox=$PKR_VAR_vagrantbox -var port=$PKR_VAR_port -var username=$PKR_VAR_username -var password=$PKR_VAR_password -var event=$PKR_VAR_event -var services=$PKR_VAR_services  .
+packer build -var vagrantbox=$PKR_VAR_vagrantbox -var port=$PKR_VAR_port -var username=$PKR_VAR_username -var password=$PKR_VAR_password -var event=$PKR_VAR_event -var services=$PKR_VAR_services .

@@ -9,6 +9,7 @@ SCRIPT
 
 Vagrant.configure("2") do |config|
   config.vm.box = "archlinux/archlinux"
+  config.vm.box_version = "20230401.139781"
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
     vb.check_guest_additions = true
