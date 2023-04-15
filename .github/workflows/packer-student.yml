@@ -15,7 +15,10 @@ env:
   PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
   PKR_VAR_services: '["anime_boys","factory", "merc2023","password-manager","vulnogramm"]'
   PKR_VAR_username: yeti
-  PKR_VAR_password: yeti_${{ github.run_id }} 
+  PKR_VAR_password: yeti_${{ github.run_id }}
+  PKR_VAR_registry: ghcr.io
+  PKR_VAR_dockeruser: ${{ github.actor }}
+  PKR_VAR_dockertoken: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build:

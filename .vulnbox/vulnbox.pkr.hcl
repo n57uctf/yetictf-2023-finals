@@ -36,6 +36,18 @@ variable "services" {
   type = list(string)
 }
 
+variable "registry" {
+  type = string
+}
+
+variable "dockeruser" {
+  type = string
+}
+
+variable "dockertoken" {
+  type = string
+}
+
 source "virtualbox-vm" "vulnbox" {
   vm_name = var.vagrantbox
   headless = true
@@ -84,9 +96,20 @@ build {
       "HOME=/home/${var.username}"
     ]
     inline = [
+      "echo ${var.dockertoken} | sudo -E -u ${var.username} docker login --password-stdin ${var.registry} -u ${var.dockeruser}"
+    ]
+  }
+
+  provisioner "shell" {
+    environment_vars = [
+      "PWD=/vagrant",
+      "HOME=/home/${var.username}"
+    ]
+    inline = [
       for s in var.services: "sudo cp -r /vagrant/${s}/${s} /home/${var.username}/${s}"
     ]
   }
+
   provisioner "shell" {
     environment_vars = [
       "PWD=/vagrant",
@@ -94,9 +117,10 @@ build {
     ]
     inline = [
       "cd /vagrant",
+      "sudo -E chown -R ${var.username}:${var.username} /home/${var.username}/",
       "sudo -E -u ${var.username} rm -rf /home/${var.username}/.jury",
       "sudo -E -u ${var.username} find /home/${var.username}/ -name \"host_prepare.sh\" -exec echo FOUND PREPARE {} \\; -exec bash {} \\;",
-      "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec echo FOUND docker-compose {} \\; -exec docker-compose -f {} up --build -d \\;",
+      "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec echo FOUND docker-compose {} \\; -exec docker-compose -f {} up --no-build -d \\;",
       "sudo -E -u ${var.username} find /home/${var.username}/ -name \"docker-compose.yml\" -exec docker-compose -f {} down \\;"
     ]
   }
@@ -108,9 +132,9 @@ build {
     ]
     inline = [
       "cd /vagrant",
-      "sudo -E -u ${var.username} rm -rf /home/${var.username}/vulnogramm/Exsample",
+      "sudo -E rm -rf /home/${var.username}/vulnogramm/Exsample",
       # TODO: Fix deletion of BankService
-      "sudo -E -u ${var.username} rm -rf /home/${var.username}/BankService/backend",
+      "sudo -E rm -rf /home/${var.username}/BankService/backend",
       "echo -e 'y\\ny' | sudo -E docker image prune -a",
       "echo -e 'y\\ny' | sudo -E docker container prune"
     ]
@@ -118,13 +142,15 @@ build {
 
   provisioner "shell"{
     environment_vars = [
-      "PWD=/vagrant"
+      "PWD=/vagrant",
+      "HOME=/home/${var.username}"
     ]
     inline = [
       "history -c",
       "sudo -E cp /etc/systemd/network/eth0.network /etc/systemd/network/eth1.network",
       "sudo -E sed -i 's/eth0/eth1/' /etc/systemd/network/eth1.network",
-      "sudo -E usermod -L vagrant"
+      "sudo -E usermod -L vagrant",
+      "sudo -E -u ${var.username} docker logout ${var.registry}"
     ]
   }
 }
