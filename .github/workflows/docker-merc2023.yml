@@ -5,7 +5,7 @@ on:
   push:
     branches: [ "main", "service/merc2023", "cicd" ]
     paths:
-      - 'jora/**'
+      - 'merc2023/**'
       - '.github/workflows/docker-merc2023.yml'
 
 env:
