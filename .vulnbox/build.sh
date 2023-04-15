@@ -1,5 +1,5 @@
 #!/bin/bash
-source .env.sample
+source .env.student
 vagrant validate
 vagrant up --no-provision --provider virtualbox
 vagrant provision
