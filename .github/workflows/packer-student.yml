@@ -123,34 +123,39 @@ jobs:
     name: Push VM to s3
     runs-on: [self-hosted, linux, X64, vbox, vagrant]
     env:
-      ZIP_PASSWORD: YetiNETI2023  # TODO: Fix hardcode password pls
+      ZIP_PASSWORD: ${{ github.sha }}
     steps:
       - name: Check aws cli
         run: aws s3 help >/dev/null 
 
       - name: Get current date
         id: today
-        run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        run: echo "today=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
 
       - name: (DEBUG) check output folder
         run: ls -alh ./.vulnbox/output-vulnbox/
       
       - name: ZIP w\ password
-        run: zip -e -P $ZIP_PASSWORD ${{ env.PKR_VAR_event }}_Student_${{ steps.today.outputs.today }}.ova.zip ${{ env.PKR_VAR_event }}.ova
+        run: zip -e -P ${{ env.ZIP_PASSWORD }} ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.PKR_VAR_event }}.ova
         working-directory: ./.vulnbox/output-vulnbox/
-
-      - run: sha256sum ${{ env.PKR_VAR_event }}_Student_${{ steps.today.outputs.today }}.ova.zip | tee sha256sum
-        working-directory: ./.vulnbox/output-vulnbox/
+        env: 
+          ZIP_PREFIX: ${{ env.PKR_VAR_event }}_Student
 
       - name: Put to Yandex Object storage
         run: |
-          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet ${{ env.PKR_VAR_event }}_Student_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.PKR_VAR_event }}_Student_${{ steps.today.outputs.today }}.ova.zip
-          aws s3 --endpoint-url=https://storage.yandexcloud.net cp --quiet sha256sum s3://vulnbox/sha256sum.txt
+          alias ys3='aws s3 --endpoint-url=https://storage.yandexcloud.net'
+          ys3 cp --quiet ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip
+          ys3 cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip ${{ env.ZIP_PREFIX }}-latest.ova.zip
+          sha256sum ${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ova.zip | ys3 cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum
+          ys3 cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.sha256sum s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.sha256sum
+          echo ${{ env.ZIP_PASSWORD }} | ys3 cp --quiet - s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha
+          ys3 cp --quiet s3://vulnbox/${{ env.ZIP_PREFIX }}_${{ steps.today.outputs.today }}.ghsha s3://vulnbox/${{ env.ZIP_PREFIX }}-latest.ghsha
         working-directory: ./.vulnbox/output-vulnbox/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "ru-central1"
+          ZIP_PREFIX: ${{ env.PKR_VAR_event }}_Student
 
       - run: rm -rf output-vulnbox
         working-directory: ./.vulnbox/
