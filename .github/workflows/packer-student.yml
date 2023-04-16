@@ -8,8 +8,6 @@ on:
       - '.vulnbox/**'
       - '.github/workflows/packer-student.yml'
   workflow_call:
-  schedule:
-    - cron: '0 */2 * * *'
 
 env:
   PKR_VAR_event: YetiCTF2023 # TODO: Fix hardcode
