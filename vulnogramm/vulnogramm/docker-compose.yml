@@ -26,10 +26,10 @@ services:
 
   web:
     image: ${IMAGE_BACKEND:-ghcr.io/n57uctf/vulnogramm-backend:main}
-    build: ./Exsample/Vulnogramm/.
+    build: ./backend/.
     restart: always
     volumes:
-      - ./backend:${COPY:-/app}
+      - ./backend:/app
     expose:
       - 80
     depends_on:

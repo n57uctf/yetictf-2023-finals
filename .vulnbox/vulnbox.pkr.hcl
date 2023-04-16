@@ -118,8 +118,7 @@ build {
     ]
     inline = [
       "cd /vagrant",
-      "sudo -E rm -rf /home/${var.username}/vulnogramm/Exsample",
-      "sudo -E docker compose -f /home/${var.username}/vulnogramm/docker-compose.yml run --no-deps --entrypoint 'cp -r /app /code' web"
+      "sudo -E rm -rf /home/${var.username}/vulnogramm/Exsample"
     ]
   }
 
