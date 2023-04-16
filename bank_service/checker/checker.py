@@ -101,8 +101,10 @@ def push(args: PushArgs) -> CheckerResult:
         resp = requests.post(f'{url}/register', json=json1, timeout = 2)
         if resp.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {resp.url} - {resp.status_code}')
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
-        return CheckerResult(status=Status.DOWN.value,
+        return CheckerResult(status=Status.ERROR.value,
                              private_info=str(e),
                              public_info=f'PUSH {Status.DOWN.value} Can not connect')
     username = get_random_username()
@@ -131,6 +133,8 @@ def push(args: PushArgs) -> CheckerResult:
         resp = requests.post(f'{url}/register', json=json1, timeout = 2)
         if resp.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {resp.url} - {resp.status_code}')
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(status=Status.DOWN.value,
                              private_info=str(e),
@@ -145,14 +149,16 @@ def push(args: PushArgs) -> CheckerResult:
         if resp.status_code != 200:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {resp.url} - {resp.status_code}') 
         toAcNum = resp.json()[-1]['accountNumber']
-        json1={'to':toAcNum, 'amount':'1', 'comment':flag}
+        json1={'to':toAcNum, 'amount':'1', 'comment':args.flag}
         resp = requests.post(f'{url}/user/transfer', headers={'Authorization': 'Bearer ' + token}, json=json1, timeout = 2)
         if resp.status_code != 200:
-            return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {resp.url} - {resp.status_code}') 
+            return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PUSH {Status.MUMBLE.value} {resp.url} - {resp.status_code}')
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
-        return CheckerResult(status=Status.DOWN.value,
+        return CheckerResult(status=Status.ERROR.value,
                              private_info=str(e),
-                             public_info=f'PUSH {Status.DOWN.value} Can not connect')
+                             public_info=f'PUSH {Status.ERROR.value} Can not connect')
     return CheckerResult(status=Status.OK.value, private_info=json_object, public_info='PUSH works')
 
 def pull(args: PullArgs) -> CheckerResult:
@@ -170,6 +176,8 @@ def pull(args: PullArgs) -> CheckerResult:
             return CheckerResult(status=Status.MUMBLE.value, private_info='', public_info=f'PULL {Status.MUMBLE.value} {resp.url} - {resp.status_code}') 
         if args.flag not in resp.json()[-1]['comments']:
             return CheckerResult(status=Status.CORRUPT.value, private_info='', public_info=f'PULL {Status.CORRUPT.value} {resp.url} - {resp.status_code}') 
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
+        return CheckerResult(status=Status.DOWN.value, private_info="", public_info="Connection error")
     except Exception as e:
         return CheckerResult(status=Status.DOWN.value,
                              private_info=str(e),
