@@ -4,8 +4,8 @@ For real pacani
 *По вопросам писать Никита#8022 и BëḳöṠä#9151*
 
 Telegram
-https://t.me/angrydish
-https://t.me/bumbuker
+Никита > https://t.me/angrydish
+Егор > https://t.me/bumbuker
 
 Пройдемся по уязвимостям, изначально их было 3, но вы могли найти и больше).
 
@@ -14,10 +14,10 @@ https://t.me/bumbuker
 ```
 /reply/*Здесь айди группы в которую делается репост*/*Здесь айди треда, который мы будем репостить к нам в группу*
 
-curl -b "Cookies=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImYifQ.qAg1quQ9ElCS3QF_WI9UEY1GKLTcNtDHVl7o-Q2ocvA" -v -X POST http://localhost:8081/reply/2/1 -d ""
+curl -b "Cookies=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImYifQ.qAg1quQ9ElCS3QF_WI9UEY1GKLTcNtDHVl7o-Q2ocvA" -v -X POST http://host:port/reply/2/1 -d ""
 ```
  + Cледующая уязвимость заключалась в получении VIP пользователя, который мог видеть и заходи во все группы и треды, даже в те, которые были не видны другим пользователям. Чтобы получить VIP, нужно было на эндпоинт изменения данных пользователя, то есть */user*, POST запрос, в котором кроме обычной публичной и приватной информации, можно было добавить поле *isVip=True*. Пример:
 ```
-curl -b "Cookies=*Ваше куки*" -v -X POST http://*Адрес самого сервиса*/user -d "isVip=True&inputBio=kek"
+curl -b "Cookies=*Ваши куки*" -v -X POST http://host:port/user -d "isVip=True&inputBio=kek"
 ```
  + И последняя наше уязвимость заключалась в простой SQL инъекции. За счёт уязвимости одного из запросов в бд, который подгружал данные пользователя на сайт. В общем, у нас есть на сайте пользователь *Sergey*. Если мы создадим пользователя с именем  *Serge%*, то при попадании на сайт с информацией о пользователе, мы увидим не информацию пользователя *Serge%*, а информацию пользователя *Sergey*. На этом всё, возможно в процессе тестов мы найдем ещё уязвимости, но так даже интересней:).
