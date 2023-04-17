@@ -2,7 +2,10 @@
 For real pacani
 
 *По вопросам писать Никита#8022 и BëḳöṠä#9151*
-*tg https://t.me/bumbuker, https://t.me/angrydish*
+
+Telegram
+https://t.me/angrydish
+https://t.me/bumbuker
 
 Пройдемся по уязвимостям, изначально их было 3, но вы могли найти и больше).
 
