@@ -4,8 +4,8 @@ For real pacani
 *По вопросам писать Никита#8022 и BëḳöṠä#9151*
 
 Telegram
-Никита > https://t.me/angrydish
-Егор > https://t.me/bumbuker
++ Никита+ Y > https://t.me/angrydish
++ Егор > https://t.me/bumbuker
 
 Пройдемся по уязвимостям, изначально их было 3, но вы могли найти и больше).
 
