@@ -1,8 +1,8 @@
 # Vulnogramm
 
-**Разработчик Аvsjanka**
+**Разработчик Аvsjanka, Redundunt**
   
-**Контакты:@avsjanka**
+**Контакты:@avsjanka, @redundunt**
   
 
 **Суть сервиса:**
